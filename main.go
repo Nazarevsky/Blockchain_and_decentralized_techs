@@ -15,6 +15,20 @@ var opSys string
 var execution bool
 
 var keyCount = make(map[int]string)
+var bits []int = []int{8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096}
+
+func keyHandler(key string) {
+	if key == "1" {
+		task1()
+	} else if key == "2" {
+		task2()
+	} else if key == "3" {
+		task3()
+	} else if key == "*" {
+		execution = false
+		fmt.Println("До зустрічі!")
+	}
+}
 
 func ClearConsole() {
 	if opSys == "windows" {
@@ -25,12 +39,14 @@ func ClearConsole() {
 		cmd := exec.Command("clear")
 		cmd.Stdout = os.Stdout
 		cmd.Run()
+	} else {
+		fmt.Println("\n\n")
 	}
 }
 
 func fillKeyCount() {
-	for num := 8; num <= 4096; num *= 2 {
-		keyCount[num] = big.NewInt(0).Exp(big.NewInt(2), big.NewInt(int64(num)), nil).String()
+	for i := 0; i < len(bits); i++ {
+		keyCount[bits[i]] = big.NewInt(0).Exp(big.NewInt(2), big.NewInt(int64(bits[i])), nil).String()
 	}
 }
 
@@ -40,19 +56,19 @@ func task1() {
 
 	for true {
 		if _, exist := keyCount[8]; exist {
-			for num := 8; num <= 4096; num *= 2 {
-				fmt.Println(strconv.FormatInt(int64(num), 10) + "-біт: " + keyCount[num])
+			for i := 0; i < len(bits); i++ {
+				fmt.Println(strconv.FormatInt(int64(bits[i]), 10) + "-біт: " + keyCount[bits[i]])
 			}
 		} else {
 			fillKeyCount()
-			for num := 8; num <= 4096; num *= 2 {
-				fmt.Println(strconv.FormatInt(int64(num), 10) + "-біт: " + keyCount[num])
+			for i := 0; i < len(bits); i++ {
+				fmt.Println(strconv.FormatInt(int64(bits[i]), 10) + "-біт: " + keyCount[bits[i]])
 			}
 		}
 
-		fmt.Println("0. Повернутися у меню.")
+		fmt.Println("*. Повернутися у меню.")
 		fmt.Scanln(&task1Key)
-		if task1Key == "0" {
+		if task1Key == "*" {
 			break
 		}
 	}
@@ -68,35 +84,42 @@ func task2() {
 
 	for true {
 		ClearConsole()
-		for num := 8; num <= 4096; num *= 2 {
-			val, err := big.NewInt(0).SetString(keyCount[num], 10)
+		for i := 0; i < len(bits); i++ {
+			val, err := big.NewInt(0).SetString(keyCount[bits[i]], 10)
 			if !err {
 				panic(err)
 			}
 
 			val.Rand(rand.New(rand.NewSource(int64(time.Now().UnixMilli()))), val)
-			fmt.Println(strconv.FormatInt(int64(num), 10) + "-біт значення: " + val.String())
+			fmt.Println(strconv.FormatInt(int64(bits[i]), 10) + "-біт значення: " + val.String())
 		}
 
 		fmt.Println("Будь-яка кнопка. Згенерувати нові значення.")
-		fmt.Println("0. Повернутися у меню.")
+		fmt.Println("*. Повернутися у меню.")
 		fmt.Scanln(&task2Key)
-		if task2Key == "0" {
+		if task2Key == "*" {
 			break
 		}
 	}
 }
 
-func keyHandler(key string) {
-	if key == "1" {
-		task1()
-	} else if key == "2" {
-		task2()
-	} else if key == "3" {
+func task3() {
+	ClearConsole()
+	var task1Key string
 
-	} else if key == "0" {
-		execution = false
-		fmt.Println("До зустрічі!")
+	for true {
+		ClearConsole()
+		fmt.Println("Оберіть кількість біт для генерації ключа та натисніть на відповідну кнопку")
+
+		for i := 0; i < len(bits); i++ {
+			fmt.Println(strconv.FormatInt(int64(i), 10) + ". " + strconv.FormatInt(int64(bits[i]), 10) + " біт")
+		}
+
+		fmt.Println("*. Повернутися у меню.")
+		fmt.Scanln(&task1Key)
+		if task1Key == "*" {
+			break
+		}
 	}
 }
 
@@ -111,7 +134,7 @@ func main() {
 		fmt.Println("1. Завдання 1: Кількість варіантів ключів.")
 		fmt.Println("2. Завдання 2: Випадкові значення ключів.")
 		fmt.Println("3. Завдання 3: Брутфорс.")
-		fmt.Println("0. Вийти з програми.")
+		fmt.Println("*. Вийти з програми.")
 
 		fmt.Scanln(&key)
 		keyHandler(key)
