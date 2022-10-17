@@ -1,0 +1,1 @@
+Blockchain_and_decentralized_techs practises by Nazarii Shcherbak
