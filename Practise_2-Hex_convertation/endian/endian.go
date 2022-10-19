@@ -1,6 +1,5 @@
 package endian
 
-// if we write a library, we can't use 0x at the beginning!!
 import (
 	"fmt"
 	"math"
@@ -18,7 +17,7 @@ func addZeroToLen(str string, length int, state bool) string {
 	}
 }
 
-func reverseHexNum(value string) string { // startNum if we have 0x at the beginning
+func reverseHexNum(value string) string {
 	valueChars := []rune(value)
 	valLen := int(math.Round(float64(len(value)) / float64(2)))
 	for i := 0; i < valLen; i += 2 {
@@ -29,26 +28,23 @@ func reverseHexNum(value string) string { // startNum if we have 0x at the begin
 	return string(valueChars)
 }
 
-func hexToLittleEndian(value string) *big.Int {
-	revStr := reverseHexNum(value)
-	answ, err := big.NewInt(0).SetString(revStr, 16)
-
-	if !err {
-		panic("Помилка! Конвертується не число.")
+func HexToLittleEndian(value string) *big.Int {
+	var revStr string
+	revStr = value
+	if len(value)%2 == 1 {
+		revStr = addZeroToLen(value, len(value)+1, true)
 	}
+	revStr = reverseHexNum(revStr)
+	answ, _ := big.NewInt(0).SetString(revStr, 16)
 	return answ
 }
 
-func hexToBigEndian(value string) *big.Int {
-	answer, err := big.NewInt(0).SetString(value, 16) // remake 0x should not get in!
-	if !err {
-		panic("Помилка! Конвертується не число.")
-	}
-
+func HexToBigEndian(value string) *big.Int {
+	answer, _ := big.NewInt(0).SetString(value, 16)
 	return answer
 }
 
-func bigintToHex(n *big.Int) string {
+func bigIntToHex(n *big.Int) string {
 	str := fmt.Sprintf("%x", n)
 	length := 32
 	for ; len(str) > length; length *= 2 {
@@ -57,12 +53,12 @@ func bigintToHex(n *big.Int) string {
 	return addZeroToLen(str, length, true)
 }
 
-func littleEndianToHex(value *big.Int) string {
-	hexVal := bigintToHex(value)
+func LittleEndianToHex(value *big.Int) string {
+	hexVal := bigIntToHex(value)
 	hexVal = reverseHexNum(hexVal)
 	return hexVal
 }
 
-func bigEndianToHex(value *big.Int) string {
+func BigEndianToHex(value *big.Int) string {
 	return fmt.Sprintf("%x", value)
 }
