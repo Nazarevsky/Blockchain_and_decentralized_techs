@@ -5,21 +5,33 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"strings"
 )
 
-func reverseHexNum(value string, startNum int) string { // startNum if we have 0x at the beginning
+func addZeroToLen(str string, length int, state bool) string {
+	concat := strings.Repeat("0", length-len(str))
+
+	if state {
+		return str + concat
+	} else {
+		return concat + str
+	}
+}
+
+func reverseHexNum(value string) string { // startNum if we have 0x at the beginning
 	valueChars := []rune(value)
 	valLen := int(math.Round(float64(len(value)) / float64(2)))
-	for i := startNum; i < valLen; i += 2 {
-		valueChars[len(value)-i], valueChars[i] = valueChars[i], valueChars[len(value)-i]
-		valueChars[len(value)-i+1], valueChars[i+1] = valueChars[i+1], valueChars[len(value)-i+1]
+	for i := 0; i < valLen; i += 2 {
+		valueChars[len(value)-i-2], valueChars[i] = valueChars[i], valueChars[len(value)-i-2]
+		valueChars[len(value)-i-1], valueChars[i+1] = valueChars[i+1], valueChars[len(value)-i-1]
 	}
+
 	return string(valueChars)
 }
 
 func hexToLittleEndian(value string) *big.Int {
-	revStr := reverseHexNum(value, 2)
-	answ, err := big.NewInt(0).SetString(revStr[2:], 16)
+	revStr := reverseHexNum(value)
+	answ, err := big.NewInt(0).SetString(revStr, 16)
 
 	if !err {
 		panic("Помилка! Конвертується не число.")
@@ -37,20 +49,35 @@ func hexToBigEndian(value string) *big.Int {
 }
 
 func bigintToHex(n *big.Int) string {
-	return fmt.Sprintf("%x", n) // or %x or upper case
+	str := fmt.Sprintf("%x", n)
+	length := 32
+	for ; len(str) > length; length *= 2 {
+	}
+
+	return addZeroToLen(str, length, true)
 }
 
 func littleEndianToHex(value *big.Int) string {
 	hexVal := bigintToHex(value)
-	hexVal = reverseHexNum(hexVal, 1)
+	hexVal = reverseHexNum(hexVal)
 	return hexVal
 }
 
-func main() {
-	str := "0x0d0f000000000000000000000000000000000000000000000000000000000000"
-	answ := hexToLittleEndian(str)
-	fmt.Println("Answer 1: " + answ.String())
+func bigEndianToHex(value *big.Int) string {
+	return fmt.Sprintf("%x", value)
+}
 
-	str = littleEndianToHex(answ)
-	fmt.Println("Answer 2: " + str)
+func main() {
+	str := "a0db0000000000000000000000000000"
+	fmt.Println("Value: " + str)
+	litEnd := hexToLittleEndian(str)
+	bigEnd := hexToBigEndian(str)
+	fmt.Println("Little Endian: " + litEnd.String())
+	fmt.Println("Big Endian: " + bigEnd.String())
+
+	str = littleEndianToHex(litEnd)
+	fmt.Println("Hex from Little Endian: " + str)
+
+	str = bigEndianToHex(bigEnd)
+	fmt.Println("Hex from Big Endian: " + str)
 }
