@@ -45,8 +45,9 @@ func isHexNum(num string) (string, bool) {
 	if len(num) > 1 && (num[:2] == "0x" || num[:2] == "0X") {
 		num = num[2:]
 	}
-	_, err := big.NewInt(0).SetString(num, 16)
-	if !err {
+	val, err := big.NewInt(0).SetString(num, 16)
+
+	if !err || big.NewInt(0).Cmp(val) == 1 {
 		return num, false
 	}
 	return num, true
@@ -59,7 +60,7 @@ func taskFunction12(fn func(string) *big.Int, _type string) {
 		ClearConsole()
 		fmt.Println(_type + ".")
 		if !err {
-			fmt.Println("Помилка. Введене значення - не число.")
+			fmt.Println("Помилка. Введене значення - не ціле беззнакове число.")
 			err = false
 		}
 		fmt.Println("Введіть HEX значення. Приклад: 0xff00a або ff00a. Регістр значення не має.")
@@ -89,8 +90,8 @@ func taskFunction34(fn func(*big.Int) string, _type string) {
 	for true {
 		ClearConsole()
 		fmt.Println(_type + ".")
-		if !err {
-			fmt.Println("Помилка. Введене значення - не число.")
+		if !err || (big.NewInt(0).Cmp(val) == 1) {
+			fmt.Println("Помилка. Введене значення - не ціле беззнакове число.")
 			err = false
 		}
 		fmt.Println("Введіть значення у десятковому вигляді.")
@@ -98,7 +99,7 @@ func taskFunction34(fn func(*big.Int) string, _type string) {
 		fmt.Scanln(&str)
 		val, err = big.NewInt(0).SetString(str, 10)
 
-		if err {
+		if err && !(big.NewInt(0).Cmp(val) == 1) {
 			num := fn(val)
 			fmt.Println("\nЗначення 0x" + _type + ": " + num + "\n")
 			fmt.Println("Будь-яка кнопка. Спробувати ще раз.")
