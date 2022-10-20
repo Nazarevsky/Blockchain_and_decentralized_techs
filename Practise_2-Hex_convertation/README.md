@@ -1,4 +1,4 @@
-#Practise_2-Hex_convertation
+# Practise_2-Hex_convertation
 Обрання варіантів у додатку здійснюється за рахунок натискання потрібної кнопки (цифра) та натисканні клавіші Enter</br>
 Роботу поділено на два файли: main.go та endian.go (/endian/endian.go), де endian.go - бібліотека для перевода значень, main.go - CLI для використання бібліотеки<br/>
 <br/>
