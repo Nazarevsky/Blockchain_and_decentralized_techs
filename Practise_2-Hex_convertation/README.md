@@ -11,11 +11,11 @@
 HEX значення виводяться без 0x (це зроблено для зручності, бо більшість конверторів не сприймають HEX значення з 0x на початку)<br/>
 <br/>
 Короткий опис функцій endian.go<br/>
-```addZeroToLen(string, int, bool) string``` - додає нулів до строки, щоб її довжина була такою, яка вказана у аргументі int (додається ззаду чи спереді залежить від флагу bool)<br/>
+```addZeroToLen(string, int, bool) string``` - додає нулі до строки, щоб її довжина була такою, яка вказана у аргументі int (додавання ззаду чи спереді залежить від флагу bool)<br/>
 ```reverseHexNum(string) string``` - перевертає строку задом наперед по 2 значення<br/>
 ```HexToLittleEndian(string) *big.Int``` - переводить значення HEX у Little Endian<br/>
 ```HexToBigEndian(string) *big.Int``` - переводить значення HEX у Big Endian<br/>
-```bigIntToHex(*big.Int) string``` - <br/>
+```bigIntToHex(*big.Int) string``` - переводить значення Int у HEX<br/>
 ```LittleEndianToHex(*big.Int) string``` - переводить значення Little Endian у HEX<br/>
 ```BigEndianToHex(*big.Int) string``` - переводить значення Big Endian у HEX<br/>
 <br/>
