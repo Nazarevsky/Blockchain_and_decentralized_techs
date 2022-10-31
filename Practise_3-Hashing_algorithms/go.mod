@@ -1,3 +1,3 @@
-module practise3
+module pract3
 
 go 1.19

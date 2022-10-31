@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"practise3/myhash"
+	"pract3/hashing"
 )
 
 func main() {
-	fmt.Println("Some text")
-	myhash.Hello()
+	message := "Some text"
+	fmt.Println(hashing.SHA1(message))
 }
