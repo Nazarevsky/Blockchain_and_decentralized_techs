@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-var w []uint32
-
 func binary(s string) string {
 	res := ""
 	for _, c := range s {
@@ -36,6 +34,8 @@ func rotate(val uint32, k int) uint32 {
 
 func SHA1(message string) string {
 	var sha1_h = []uint32{0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0}
+	var w []uint32
+
 	binForm := binary(message)
 	binForm = filler(binForm)
 
@@ -82,5 +82,10 @@ func SHA1(message string) string {
 			sha1_h[i] += arr[i]
 		}
 	}
-	return fmt.Sprintf("%x ", sha1_h[0]) + fmt.Sprintf("%x ", sha1_h[1]) + fmt.Sprintf("%x ", sha1_h[2]) + fmt.Sprintf("%x ", sha1_h[3]) + fmt.Sprintf("%x ", sha1_h[4])
+	a := addZerosTo(fmt.Sprintf("%x", sha1_h[0]), 8)
+	b := addZerosTo(fmt.Sprintf("%x", sha1_h[1]), 8)
+	c := addZerosTo(fmt.Sprintf("%x", sha1_h[2]), 8)
+	d := addZerosTo(fmt.Sprintf("%x", sha1_h[3]), 8)
+	e := addZerosTo(fmt.Sprintf("%x", sha1_h[4]), 8)
+	return a + b + c + d + e
 }
