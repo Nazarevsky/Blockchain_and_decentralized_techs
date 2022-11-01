@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-	message := "I can literally talk all dayI can literally talk all dayI can literally talk all dayI can literally talk all dayI can literally talk all dayI can literally talk all dayI can literally talk all dayI can literally talk all dayI can literally talk all day"
-	fmt.Println(len(message))
+	message := "sha"
 	fmt.Println(hashing.SHA1(message))
 }
