@@ -57,6 +57,11 @@ func keyHandler(key string) {
 	}
 }
 
+func a(b []int) []int {
+	b[0] = 13
+	return b
+}
+
 func main() {
 	opSys = runtime.GOOS
 	// scann = bufio.NewScanner(os.Stdin)
@@ -72,7 +77,13 @@ func main() {
 	// 	fmt.Scanln(&key)
 	// 	keyHandler(key)
 	// }
+
 	ClearConsole()
 	message := "keccak"
 	fmt.Println(hashing.Keccak(message))
+
+	b := []int{1, 2, 3}
+	fmt.Println(b)
+	b = a(b)
+	fmt.Println(b)
 }

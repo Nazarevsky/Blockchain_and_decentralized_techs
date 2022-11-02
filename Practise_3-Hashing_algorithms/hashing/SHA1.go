@@ -1,5 +1,6 @@
 package hashing
 
+// CHECK WITH BIG VALUES!!!
 import (
 	"fmt"
 	"strconv"
@@ -34,13 +35,13 @@ func rotate(val uint32, k int) uint32 {
 
 func SHA1(message string) string {
 	var sha1_h = []uint32{0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0}
-	var w []uint32
 
 	binForm := binary(message)
 	binForm = filler(binForm)
-
 	for i := 0; i < len(binForm)/512; i += 1 {
+		var w []uint32
 		chunk := binForm[i*512 : i*512+512]
+
 		for j := 0; j < 16; j += 1 {
 			num64, _ := strconv.ParseUint(chunk[j*32:j*32+32], 2, 32)
 			num := uint32(num64)
