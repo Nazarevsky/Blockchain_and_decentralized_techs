@@ -59,17 +59,20 @@ func keyHandler(key string) {
 
 func main() {
 	opSys = runtime.GOOS
-	scann = bufio.NewScanner(os.Stdin)
-	execution = true
-	var key string
+	// scann = bufio.NewScanner(os.Stdin)
+	// execution = true
+	// var key string
 
-	for execution {
-		ClearConsole()
-		fmt.Println("Оберіть завдання та нажміть потрібну цифру.")
-		fmt.Println("1. Завдання 1: SHA-1")
-		fmt.Println("0. Вийти з програми.")
+	// for execution {
+	// 	ClearConsole()
+	// 	fmt.Println("Оберіть завдання та нажміть потрібну цифру.")
+	// 	fmt.Println("1. Завдання 1: SHA-1")
+	// 	fmt.Println("0. Вийти з програми.")
 
-		fmt.Scanln(&key)
-		keyHandler(key)
-	}
+	// 	fmt.Scanln(&key)
+	// 	keyHandler(key)
+	// }
+	ClearConsole()
+	message := "keccak"
+	fmt.Println(hashing.Keccak(message))
 }
