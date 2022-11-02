@@ -81,9 +81,4 @@ func main() {
 	ClearConsole()
 	message := "keccak"
 	fmt.Println(hashing.Keccak(message))
-
-	b := []int{1, 2, 3}
-	fmt.Println(b)
-	b = a(b)
-	fmt.Println(b)
 }
