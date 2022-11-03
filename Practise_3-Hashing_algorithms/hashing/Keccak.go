@@ -24,23 +24,20 @@ func binaryK(s string) string {
 	return res
 }
 
-// func addZerosToK(mes string, to int) string {
-// 	return strings.Repeat("0", to-len(mes)) + "1"
-// }
-
-func padding(binMes string) string { // padding maybe 0x80 at the end
+func padding(binMes string) string {
 	length := len(binMes)
 	return binMes + "1" + strings.Repeat("0", 1600-((length+2)%1600)) + "1"
 }
 
 func mod(num int, m int) int {
-	if num < 0 {
-		return m - (num*-1)%m
+	var val int = num % m
+	if val < 0 {
+		return val + m
 	}
-	return num % m
+	return val
 }
 
-func theta(a [][][]byte) [][][]byte { // really weird: same value as a
+func theta(a [][][]byte) [][][]byte {
 	var c [][]byte = make([][]byte, 5)
 	var d [][]byte = make([][]byte, 5)
 	for i := 0; i < 5; i++ {
@@ -78,7 +75,6 @@ func rho(a [][][]byte) [][][]byte {
 	for z := 0; z < 64; z++ {
 		x, y := 1, 0
 		for t := 0; t < 24; t++ {
-			fmt.Println((z - (t+1)*(t+2)/2), mod((z-(t+1)*(t+2)/2), 64))
 			a[x][y][z] = a[x][y][(mod((z - (t+1)*(t+2)/2), 64))]
 			x, y = y, (2*x+3*y)%5
 		}
@@ -146,8 +142,33 @@ func iota_(a [][][]byte, ir int) [][][]byte {
 	return a
 }
 
+func squeeze(a [][][]byte) string {
+	var s string
+	for x := 0; x < 5; x++ {
+		for y := 0; y < 5; y++ {
+			for z := 0; z < 64; z++ {
+				s += string(a[y][x][z] + 48)
+			}
+		}
+	}
+	return s
+}
+
+func binToHex(s string) string {
+	ui, _ := strconv.ParseUint(s, 2, 8)
+	return fmt.Sprintf("%x", ui)
+}
+
+func squeezeToHex(s string) string {
+	var res string
+	for i := 0; i < len(s)/8; i++ {
+		res += binToHex(s[i*8 : i*8+8])
+	}
+	return res
+}
+
 func Keccak(messgae string) string {
-	var sponge [][][]byte = make([][][]byte, 5) // sponge stores dec value
+	var sponge [][][]byte = make([][][]byte, 5)
 	for i := 0; i < 5; i++ {
 		sponge[i] = make([][]byte, 5)
 		for j := 0; j < 5; j++ {
@@ -157,6 +178,7 @@ func Keccak(messgae string) string {
 
 	binaryMes := binaryK(messgae)
 	padMes := padding(binaryMes)
+	padMes = "1100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101110001011100010111000101"
 
 	for i := 0; i < len(padMes)/1600; i += 1 {
 		chunk := padMes[i*1600 : i*1600+1600]
@@ -165,24 +187,17 @@ func Keccak(messgae string) string {
 			for y := 0; y < 5; y++ {
 				for z := 0; z < 64; z++ {
 					n, _ := strconv.Atoi(string(chunk[64*(5*x+y)+z]))
-					sponge[x][y][z] = byte(n)
+					sponge[x][y][z] ^= byte(n)
+					println(sponge[x][y][z])
 				}
 			}
 		}
 
-		for ir := 12 + 2*6 - 24; ir != 12+2*6-1; ir-- { // change to constants?
+		for ir := 0; ir < 24; ir++ {
 			sponge = iota_(hi(pi(rho(theta(sponge)))), ir)
-		}
-
-		for x := 0; x < 5; x++ {
-			for y := 0; y < 5; y++ {
-				for z := 0; z < 64; z++ {
-					fmt.Println(sponge[x][y][z])
-				}
-			}
 		}
 
 	}
 
-	return ""
+	return squeezeToHex(squeeze(sponge))
 }

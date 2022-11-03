@@ -79,6 +79,6 @@ func main() {
 	// }
 
 	ClearConsole()
-	message := "keccak"
+	message := "a"
 	fmt.Println(hashing.Keccak(message))
 }
