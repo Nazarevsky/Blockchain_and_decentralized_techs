@@ -86,7 +86,7 @@ func pi(a [][][]byte) [][][]byte {
 	return a
 }
 
-func hi(a [][][]byte) [][][]byte {
+func chi(a [][][]byte) [][][]byte {
 	for x := 0; x < 5; x++ {
 		for y := 0; y < 5; y++ {
 			for z := 0; z < 64; z++ {
@@ -185,7 +185,7 @@ func Keccak(messgae string) string {
 		}
 
 		for ir := 0; ir < 24; ir++ {
-			sponge = iota_(hi(pi(rho(theta(sponge)))), ir)
+			sponge = iota_(chi(pi(rho(theta(sponge)))), ir)
 		}
 
 	}

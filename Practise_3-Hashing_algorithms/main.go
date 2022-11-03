@@ -27,7 +27,7 @@ func ClearConsole() {
 	}
 }
 
-func task1(fn func(string) string, algName string) {
+func task(fn func(string) string, algName string) {
 	for true {
 		ClearConsole()
 		fmt.Println("Введіть повідомдення для гешування за алгоритмом", algName)
@@ -50,18 +50,13 @@ func task1(fn func(string) string, algName string) {
 
 func keyHandler(key string) {
 	if key == "1" {
-		task1(hashing.SHA1, "SHA-1")
+		task(hashing.SHA1, "SHA-1")
 	} else if key == "2" {
-		task1(hashing.Keccak, "Keccak")
+		task(hashing.Keccak, "Keccak")
 	} else if key == "0" {
 		execution = false
 		fmt.Println("До зустрічі!")
 	}
-}
-
-func a(b []int) []int {
-	b[0] = 13
-	return b
 }
 
 func main() {
