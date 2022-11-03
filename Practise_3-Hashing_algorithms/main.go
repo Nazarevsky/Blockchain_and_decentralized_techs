@@ -50,7 +50,7 @@ func task(fn func(string) string, algName string) {
 
 func keyHandler(key string) {
 	if key == "1" {
-		task(hashing.SHA1, "SHA-1")
+		task(hashing.SHA1, "SHA1")
 	} else if key == "2" {
 		task(hashing.Keccak, "Keccak")
 	} else if key == "0" {
