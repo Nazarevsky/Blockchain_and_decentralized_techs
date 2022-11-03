@@ -51,6 +51,8 @@ func task1(fn func(string) string, algName string) {
 func keyHandler(key string) {
 	if key == "1" {
 		task1(hashing.SHA1, "SHA-1")
+	} else if key == "2" {
+		task1(hashing.Keccak, "Keccak")
 	} else if key == "0" {
 		execution = false
 		fmt.Println("До зустрічі!")
@@ -64,21 +66,18 @@ func a(b []int) []int {
 
 func main() {
 	opSys = runtime.GOOS
-	// scann = bufio.NewScanner(os.Stdin)
-	// execution = true
-	// var key string
+	scann = bufio.NewScanner(os.Stdin)
+	execution = true
+	var key string
 
-	// for execution {
-	// 	ClearConsole()
-	// 	fmt.Println("Оберіть завдання та нажміть потрібну цифру.")
-	// 	fmt.Println("1. Завдання 1: SHA-1")
-	// 	fmt.Println("0. Вийти з програми.")
+	for execution {
+		ClearConsole()
+		fmt.Println("Оберіть завдання та нажміть потрібну цифру.")
+		fmt.Println("1. Завдання 1: SHA-1")
+		fmt.Println("1. Завдання 2: Keccak (Працює неправильно)")
+		fmt.Println("0. Вийти з програми.")
 
-	// 	fmt.Scanln(&key)
-	// 	keyHandler(key)
-	// }
-
-	ClearConsole()
-	message := "a"
-	fmt.Println(hashing.Keccak(message))
+		fmt.Scanln(&key)
+		keyHandler(key)
+	}
 }
