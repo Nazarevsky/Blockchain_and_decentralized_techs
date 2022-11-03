@@ -74,7 +74,7 @@ func main() {
 		ClearConsole()
 		fmt.Println("Оберіть завдання та нажміть потрібну цифру.")
 		fmt.Println("1. Завдання 1: SHA-1")
-		fmt.Println("1. Завдання 2: Keccak (Працює неправильно)")
+		fmt.Println("2. Завдання 2: Keccak (Працює неправильно)")
 		fmt.Println("0. Вийти з програми.")
 
 		fmt.Scanln(&key)
