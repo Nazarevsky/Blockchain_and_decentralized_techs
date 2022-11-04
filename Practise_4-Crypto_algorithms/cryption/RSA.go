@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-var lower_bound uint64 = 999
-var higher_bound uint64 = 9999
+var lower_bound uint64 = 9999
+var higher_bound uint64 = 99999
 
 func isPrime(num uint64) bool {
 	if num < 0 || num%2 == 0 {
@@ -28,6 +28,9 @@ func isPrime(num uint64) bool {
 func genRandPrime() uint64 {
 	rand.Seed(time.Now().UnixNano())
 	random := rand.Uint64() % ((higher_bound - lower_bound) + lower_bound)
+
+	for ; !isPrime(random); random++ {
+	}
 
 	return random
 }
@@ -51,7 +54,7 @@ func RSA_keygen() (uint64, uint64, uint64) {
 		p = genRandPrime()
 		q = genRandPrime()
 	}
-	println(p, q)
+
 	n := p * q
 	fi := (p - 1) * (q - 1)
 	var E, D uint64
@@ -60,6 +63,7 @@ func RSA_keygen() (uint64, uint64, uint64) {
 	}
 	for D = 3; (E*D)%fi != 1; D += 1 {
 	}
+
 	return n, E, D
 }
 
