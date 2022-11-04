@@ -6,5 +6,8 @@ import (
 )
 
 func main() {
-	fmt.Println(cryption.Hi())
+	cr := cryption.VigenereEncode("AtTACKATDAWN", "LEMONE")
+	dcr := cryption.VigenereDecode(cr, "LEMONE")
+	fmt.Println(cr)
+	fmt.Println(dcr)
 }
