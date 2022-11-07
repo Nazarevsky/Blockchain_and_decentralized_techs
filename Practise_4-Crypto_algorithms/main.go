@@ -12,8 +12,7 @@ func main() {
 	// fmt.Println(dcr)
 
 	n, E, D := cryption.RSA_keygen()
-	cr := cryption.RSA_Encrypt("some text here to codeee", E, n)
+	cr := cryption.RSA(4564564, E, n)
 	fmt.Println(cr, "crypted")
-	fmt.Println(cryption.RSA_Decrypt(cr, D, n), "decrypted")
-	//fmt.Println(cryption.RSA())
+	fmt.Println(cryption.RSA(cr, D, n), "decrypted")
 }
