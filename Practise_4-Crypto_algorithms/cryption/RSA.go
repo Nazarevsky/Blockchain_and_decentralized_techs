@@ -81,6 +81,6 @@ func pow_mod_Knuth(val, pow, mod uint64) uint64 {
 	return res
 }
 
-func RSA(mes uint64, key, n uint64) uint64 {
+func RSA(mes, key, n uint64) uint64 {
 	return pow_mod_Knuth(mes, key, n)
 }
