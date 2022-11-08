@@ -25,7 +25,7 @@ var sbox [][]byte = [][]byte{
 	{0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e},
 	{0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf},
 	{0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16}}
-var mulMatr [][]byte = [][]byte{
+var mulMatr [][]int = [][]int{
 	{2, 3, 1, 1},
 	{1, 2, 3, 1},
 	{1, 1, 2, 3},
@@ -128,7 +128,7 @@ func shiftBlock() {
 }
 
 func mixColumns() {
-	var m [][]byte = [][]byte{
+	var m [][]int = [][]int{
 		{0xd4, 0xe0, 0xb8, 0x1e},
 		{0xbf, 0xb4, 0x41, 0x27},
 		{0x5d, 0x52, 0x11, 0x98},
@@ -139,40 +139,84 @@ func mixColumns() {
 		{0, 0, 0, 0},
 		{0, 0, 0, 0}}
 
-	for y := 0; y < 4; y++ {
-		for x := 0; x < 4; x++ {
-			line := ""
-			for k := 0; k < 4; k++ {
-				res[y][x] ^= int(m[k][x]) * int(mulMatr[y][k])
-				line += fmt.Sprintf("%x * %x + ", int(m[k][x]), int(mulMatr[y][k]))
+	res[0][0] = m[0][0]*mulMatr[0][0] ^ m[1][0]*mulMatr[0][1] ^ m[2][0]*mulMatr[0][2] ^ m[3][0]*mulMatr[0][3]
+	println(res[0][0])
+	// for y := 0; y < 4; y++ {
+	// 	for x := 0; x < 4; x++ {
+	// 		line := ""
+	// 		for k := 0; k < 4; k++ {
+	// 			res[y][x] ^= int(m[k][x]) * int(mulMatr[y][k])
+	// 			line += fmt.Sprintf("%x * %x + ", int(m[k][x]), int(mulMatr[y][k]))
+	// 		}
+	// 		println(line, fmt.Sprintf("%d", res[y][x]))
+	// 	}
+	// }
+
+	// for y := 0; y < 4; y++ {
+	// 	line := ""
+	// 	for x := 0; x < 4; x++ {
+	// 		line += fmt.Sprintf("%x ", res[y][x])
+	// 	}
+	// 	println(line)
+	// }
+
+}
+
+func xor(a, b byte) string {
+	if a != b {
+		return "1"
+	}
+	return "0"
+}
+
+func multHex(hex byte, mul byte) byte {
+	if mul == 1 {
+		return hex
+	}
+	bitHex := complete(fmt.Sprintf("%b", hex), 8)
+	bitMul := fmt.Sprintf("%b", mul)
+	var addMatr [][]byte
+
+	for i := 0; i < len(bitHex); i++ {
+		if bitHex[7-i] == 49 {
+			addMatr = append(addMatr, []byte{})
+			for j := len(bitMul) - 1; j >= 0; j-- {
+				if bitMul[j] == 49 {
+					addMatr[len(addMatr)-1] = append(addMatr[len(addMatr)-1], byte(i+(1-j)))
+				}
 			}
-			println(line, fmt.Sprintf("%d", res[y][x]))
 		}
 	}
 
-	for y := 0; y < 4; y++ {
-		line := ""
-		for x := 0; x < 4; x++ {
-			line += fmt.Sprintf("%x ", res[y][x])
-		}
-		println(line)
+	println(addMatr[len(addMatr)-1][1])
+	var str []string = make([]string, addMatr[len(addMatr)-1][1])
+	for i := 0; i < len(addMatr); i++ {
+		println(str[i])
 	}
+	// for i := 0; i < len(addMatr); i++ {
+	// 	for j := 0; j < len(addMatr[0]); j++ {
 
+	// 	}
+	// }
+
+	return 0
 }
 
 func AES_crypt(mes string, key string) string {
 	bitMes := pad(mesToBits(mes), 128)
-	divMesIntoBlocks(bitMes, len(bitMes)/128)
+	// divMesIntoBlocks(bitMes, len(bitMes)/128)
 
-	bitKey := pad(mesToBits(key), 128)
-	intitKey(bitKey)
+	// bitKey := pad(mesToBits(key), 128)
+	// intitKey(bitKey)
 
 	//addKey()
 	//subBytes()
 	//shiftBlock()
 	//printBlock()
-	mixColumns()
+	//mixColumns()
 	//printBlock()
 
+	multHex(0x68, 3)
+	//println(fmt.Sprintf("%b", 0x1554^0x11b))
 	return bitMes
 }
