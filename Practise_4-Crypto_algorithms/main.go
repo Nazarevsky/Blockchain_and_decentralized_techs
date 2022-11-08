@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strconv"
 )
 
@@ -110,19 +109,21 @@ func keyHandler(key string) {
 }
 
 func main() {
-	opSys = runtime.GOOS
-	scann = bufio.NewScanner(os.Stdin)
-	execution = true
-	var key string
+	// opSys = runtime.GOOS
+	// scann = bufio.NewScanner(os.Stdin)
+	// execution = true
+	// var key string
 
-	for execution {
-		ClearConsole()
-		fmt.Println("Оберіть завдання та нажміть потрібну цифру.")
-		fmt.Println("1. Завдання 1: Vigenere")
-		fmt.Println("2. Завдання 2: RSA (тільки числа)")
-		fmt.Println("0. Вийти з програми.")
+	// for execution {
+	// 	ClearConsole()
+	// 	fmt.Println("Оберіть завдання та нажміть потрібну цифру.")
+	// 	fmt.Println("1. Завдання 1: Vigenere")
+	// 	fmt.Println("2. Завдання 2: RSA (тільки числа)")
+	// 	fmt.Println("0. Вийти з програми.")
 
-		fmt.Scanln(&key)
-		keyHandler(key)
-	}
+	// 	fmt.Scanln(&key)
+	// 	keyHandler(key)
+	// }
+	println(cryption.AES_crypt("Some text", "key"))
+	//println(0x49 * 2)
 }
