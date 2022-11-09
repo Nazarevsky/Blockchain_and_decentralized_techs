@@ -124,6 +124,9 @@ func main() {
 	// 	fmt.Scanln(&key)
 	// 	keyHandler(key)
 	// }
-	println(cryption.AES_crypt("Some text", "key"))
+
+	cr := cryption.AES_crypt("Two One Nine Two", "Thats my Kung Fu")
+	println(cr)
+	println(cryption.AES_decrypt(cr, "Thats my Kung Fu"))
 	//println(0x49 * 2)
 }
