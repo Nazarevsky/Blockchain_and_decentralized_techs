@@ -60,27 +60,24 @@ func mesToBits(mes string) string {
 	return str
 }
 
-func printBlock() {
-	for i := 0; i < len(blocks); i++ {
-		for y := 0; y < 4; y++ {
-			line := ""
-			for x := 0; x < 4; x++ {
-				line += fmt.Sprintf("%d ", blocks[i][y][x])
-			}
-			println(line)
+func printBlock(block [][]byte) {
+	for y := 0; y < 4; y++ {
+		line := ""
+		for x := 0; x < 4; x++ {
+			line += fmt.Sprintf("%x ", block[y][x])
 		}
-		println()
+		println(line)
 	}
+	println()
 }
 
-func addKey() {
-	for i := 0; i < len(blocks); i++ {
-		for y := 0; y < 4; y++ {
-			for x := 0; x < 4; x++ {
-				blocks[i][y][x] ^= stateKey[y][x]
-			}
+func addKey(block [][]byte, key [][]byte) [][]byte {
+	for y := 0; y < 4; y++ {
+		for x := 0; x < 4; x++ {
+			block[y][x] ^= key[y][x] //statekey
 		}
 	}
+	return block
 }
 
 func getDecByHex(val string) int {
@@ -88,78 +85,97 @@ func getDecByHex(val string) int {
 	return int(num)
 }
 
-func subBytes() {
-	for i := 0; i < len(blocks); i++ {
-		for y := 0; y < 4; y++ {
-			for x := 0; x < 4; x++ {
-				hex := complete(fmt.Sprintf("%x", blocks[i][y][x]), 2)
-				blocks[i][y][x] = sbox[getDecByHex(string(hex[0]))][getDecByHex(string(hex[1]))]
-			}
+func getValInBox(hex byte, box [][]byte) byte {
+	hexStr := complete(fmt.Sprintf("%x", hex), 2)
+	i, _ := strconv.ParseInt(string(hexStr[0]), 16, 8)
+	j, _ := strconv.ParseInt(string(hexStr[1]), 16, 8)
+	return box[i][j]
+}
+
+func subBytes(block [][]byte) [][]byte {
+	for y := 0; y < 4; y++ {
+		for x := 0; x < 4; x++ {
+			block[y][x] = getValInBox(block[y][x], sbox)
+			// hex := complete(fmt.Sprintf("%x", block[y][x]), 2)
+			// block[y][x] = sbox[getDecByHex(string(hex[0]))][getDecByHex(string(hex[1]))]
 		}
 	}
+	return block
 }
 
 func shiftArr(arr []byte, shift int) []byte {
 	return append(arr[shift:], arr[:shift]...)
 }
 
-func shiftBlock() {
-	for i := 0; i < len(blocks); i++ {
-		for y := 1; y < 4; y++ {
-			blocks[i][y] = shiftArr(blocks[i][y], y)
-		}
+func shiftBlock(block [][]byte) [][]byte {
+	for y := 1; y < 4; y++ {
+		block[y] = shiftArr(block[y], y)
 	}
+	return block
 }
 
 func multHex(hex byte, mul byte) byte {
 	if mul == 1 {
 		return hex
+	} else if mul == 2 {
+		return getValInBox(hex, mul2)
 	}
-	hexStr := complete(fmt.Sprintf("%x", hex), 2)
-	i, _ := strconv.ParseInt(string(hexStr[0]), 16, 8)
-	j, _ := strconv.ParseInt(string(hexStr[1]), 16, 8)
-
-	if mul == 2 {
-		return mul2[i][j]
-	}
-	return mul3[i][j]
+	return getValInBox(hex, mul3)
 }
 
-func mixColumns() {
-	var m [][]byte = [][]byte{
-		{0xd4, 0xe0, 0xb8, 0x1e},
-		{0xbf, 0xb4, 0x41, 0x27},
-		{0x5d, 0x52, 0x11, 0x98},
-		{0x30, 0xae, 0xf1, 0xe5}}
-	var res [][]byte = [][]byte{
-		{0, 0, 0, 0},
-		{0, 0, 0, 0},
-		{0, 0, 0, 0},
-		{0, 0, 0, 0}}
-
+func mixColumns(block [][]byte) [][]byte {
 	for y := 0; y < 4; y++ {
 		for x := 0; x < 4; x++ {
+			var val byte = 0
 			for k := 0; k < 4; k++ {
-				res[y][x] ^= multHex(m[k][x], mulMatr[y][k])
+				val ^= multHex(block[k][x], mulMatr[y][k])
+			}
+			block[x][y] = val
+		}
+	}
+	return block
+}
+
+func genRoundKey(key [][]byte, round int) [][]byte {
+	w3 := []byte{0, 0, 0, 0}
+	w3[0] = key[0][3]
+
+	// get G(w3) and save w3
+	tempW := getValInBox(key[0][3], sbox)
+	for i := 1; i < len(key); i++ {
+		w3[i] = key[i][3]
+		key[i-1][3] = getValInBox(key[i][3], sbox)
+	}
+	key[3][3] = tempW
+	key[0][3] ^= rcon[round]
+
+	// xor words
+	for w := 0; w < len(key); w++ {
+		for i := 0; i < len(key); i++ {
+			if w != len(key)-1 {
+				key[i][w] ^= key[i][(3+w)%4]
+			} else {
+				key[i][3] = w3[i] ^ key[i][2]
 			}
 		}
 	}
 
+	return key
 }
 
 func AES_crypt(mes string, key string) string {
 	bitMes := pad(mesToBits(mes), 128)
-	// divMesIntoBlocks(bitMes, len(bitMes)/128)
+	divMesIntoBlocks(bitMes, len(bitMes)/128)
 
-	// bitKey := pad(mesToBits(key), 128)
-	// intitKey(bitKey)
+	bitKey := pad(mesToBits(key), 128)
+	intitKey(bitKey)
 
 	//addKey()
 	//subBytes()
 	//shiftBlock()
+	//mixColumns()
+	//genRoundKey()
 	//printBlock()
-	mixColumns()
-	//printBlock()
-	//println(fmt.Sprintf("%b", 0x1554^0x11b))
+
 	return bitMes
 }
