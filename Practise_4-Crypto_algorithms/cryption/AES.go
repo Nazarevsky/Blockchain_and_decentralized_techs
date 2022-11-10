@@ -185,39 +185,7 @@ func reassemble(block [][]byte) string {
 	return res
 }
 
-func AES_crypt(mes string, key string) string {
-	var blocks [][][]byte
-	var stateKey [][]byte
-
-	bitMes := pad(mesToBits(mes), 128)
-	blocks = divMesIntoBlocks(blocks, bitMes, len(bitMes)/128)
-
-	bitKey := pad(mesToBits(key), 128)
-	stateKey = intitKey(stateKey, bitKey)
-
-	for i := 0; i < len(blocks); i++ {
-		addKey(blocks[i], stateKey)
-		for r := 0; r < 9; r++ {
-			blocks[i] = subBytes(blocks[i], sbox)
-			blocks[i] = shiftBlock(blocks[i])
-			blocks[i] = mixColumns(blocks[i], mulMatr)
-			stateKey = genRoundKey(stateKey, r)
-			blocks[i] = addKey(blocks[i], stateKey)
-		}
-
-		blocks[i] = subBytes(blocks[i], sbox)
-		blocks[i] = shiftBlock(blocks[i])
-		stateKey = genRoundKey(stateKey, 9)
-		blocks[i] = addKey(blocks[i], stateKey)
-
-	}
-	res := ""
-	for i := 0; i < len(blocks); i++ {
-		res += reassemble(blocks[0])
-	}
-
-	return res
-}
+// crypt
 
 func crToBlocks(blocks [][][]byte, hexMes string, countBlocks int) [][][]byte {
 	blocks = make([][][]byte, countBlocks)
@@ -229,7 +197,8 @@ func crToBlocks(blocks [][][]byte, hexMes string, countBlocks int) [][][]byte {
 		}
 		for y := 0; y < 4; y++ {
 			for x := 0; x < 4; x++ {
-				num, _ := strconv.ParseInt(hexMes[ind:ind+2], 16, 2)
+				//binNum := fmt.Sprintf("%b", hexMes[ind:ind+2])
+				num, _ := strconv.ParseInt(hexMes[ind:ind+2], 16, 64)
 				blocks[i][x][y] = byte(num)
 				ind += 2
 			}
@@ -260,36 +229,82 @@ func invShiftBlock(block [][]byte) [][]byte {
 	return block
 }
 
+func hexToString(block [][]byte) string {
+	res := ""
+	for y := 0; y < len(block); y++ {
+		for x := 0; x < len(block); x++ {
+			res += string(block[x][y])
+		}
+	}
+	return res
+}
+
+func AES_crypt(mes string, key string) string {
+	var blocks [][][]byte
+	var stateKey [][]byte
+	var roundKeys [][][]byte
+
+	bitMes := pad(mesToBits(mes), 128)
+	blocks = divMesIntoBlocks(blocks, bitMes, len(bitMes)/128)
+	bitKey := pad(mesToBits(key), 128)
+	stateKey = intitKey(stateKey, bitKey)
+
+	roundKeys = append(roundKeys, blockNewInstance(stateKey))
+	for i := 0; i < 10; i++ {
+		stateKey = genRoundKey(stateKey, i)
+		roundKeys = append(roundKeys, blockNewInstance(stateKey))
+	}
+
+	for i := 0; i < len(blocks); i++ {
+		addKey(blocks[i], roundKeys[0])
+
+		for r := 0; r < 9; r++ {
+			blocks[i] = subBytes(blocks[i], sbox)
+			blocks[i] = shiftBlock(blocks[i])
+			blocks[i] = mixColumns(blocks[i], mulMatr)
+			blocks[i] = addKey(blocks[i], roundKeys[r+1])
+		}
+
+		blocks[i] = subBytes(blocks[i], sbox)
+		blocks[i] = shiftBlock(blocks[i])
+		blocks[i] = addKey(blocks[i], roundKeys[len(roundKeys)-1])
+	}
+	res := ""
+	for i := 0; i < len(blocks); i++ {
+		res += reassemble(blocks[i])
+	}
+
+	return res
+}
+
 func AES_decrypt(mes string, key string) string {
 	var blocks [][][]byte
 	var stateKey [][]byte
 	var roundKeys [][][]byte
 
 	blocks = crToBlocks(blocks, mes, len(mes)/32)
-
 	bitKey := pad(mesToBits(key), 128)
 	stateKey = intitKey(stateKey, bitKey)
 	roundKeys = append(roundKeys, blockNewInstance(stateKey))
+	res := ""
 
 	for i := 0; i < 10; i++ {
 		stateKey = genRoundKey(stateKey, i)
 		roundKeys = append(roundKeys, blockNewInstance(stateKey))
 	}
-	//println(len(blocks))
+
 	for i := 0; i < len(blocks); i++ {
 		blocks[i] = addKey(blocks[i], roundKeys[len(roundKeys)-1])
-		for r := 9; r > 8; r-- { // i swap to 0???
-			blocks[i] = invShiftBlock(blocks[i])
-			blocks[i] = subBytes(blocks[i], invsbox)
-			blocks[i] = addKey(blocks[i], roundKeys[r])
-			printBlock(blocks[i])
-			blocks[i] = mixColumns(blocks[i], invMulMatr)
-			printBlock(blocks[i])
-		}
 		blocks[i] = invShiftBlock(blocks[i])
 		blocks[i] = subBytes(blocks[i], invsbox)
+		for r := 8; r >= 0; r-- {
+			blocks[i] = addKey(blocks[i], roundKeys[r+1])
+			blocks[i] = mixColumns(blocks[i], invMulMatr)
+			blocks[i] = invShiftBlock(blocks[i])
+			blocks[i] = subBytes(blocks[i], invsbox)
+		}
 		blocks[i] = addKey(blocks[i], roundKeys[0])
+		res += hexToString(blocks[i])
 	}
-	//printBlock(blocks[0])
-	return ""
+	return res
 }
