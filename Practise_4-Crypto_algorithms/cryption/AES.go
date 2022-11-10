@@ -60,17 +60,6 @@ func mesToBits(mes string) string {
 	return str
 }
 
-func printBlock(block [][]byte) {
-	for y := 0; y < len(block); y++ {
-		line := ""
-		for x := 0; x < len(block); x++ {
-			line += fmt.Sprintf("%x ", block[y][x])
-		}
-		println(line)
-	}
-	println()
-}
-
 func addKey(block [][]byte, key [][]byte) [][]byte {
 	for y := 0; y < len(block); y++ {
 		for x := 0; x < len(block); x++ {
@@ -78,11 +67,6 @@ func addKey(block [][]byte, key [][]byte) [][]byte {
 		}
 	}
 	return block
-}
-
-func getDecByHex(val string) int {
-	num, _ := strconv.ParseInt(val, 16, 8)
-	return int(num)
 }
 
 func getValInBox(hex byte, box [][]byte) byte {
