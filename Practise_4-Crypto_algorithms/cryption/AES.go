@@ -61,9 +61,9 @@ func mesToBits(mes string) string {
 }
 
 func printBlock(block [][]byte) {
-	for y := 0; y < 4; y++ {
+	for y := 0; y < len(block); y++ {
 		line := ""
-		for x := 0; x < 4; x++ {
+		for x := 0; x < len(block); x++ {
 			line += fmt.Sprintf("%x ", block[y][x])
 		}
 		println(line)
@@ -72,9 +72,9 @@ func printBlock(block [][]byte) {
 }
 
 func addKey(block [][]byte, key [][]byte) [][]byte {
-	for y := 0; y < 4; y++ {
-		for x := 0; x < 4; x++ {
-			block[y][x] ^= key[y][x] //statekey
+	for y := 0; y < len(block); y++ {
+		for x := 0; x < len(block); x++ {
+			block[y][x] ^= key[y][x]
 		}
 	}
 	return block
@@ -93,8 +93,8 @@ func getValInBox(hex byte, box [][]byte) byte {
 }
 
 func subBytes(block [][]byte, box [][]byte) [][]byte {
-	for y := 0; y < 4; y++ {
-		for x := 0; x < 4; x++ {
+	for y := 0; y < len(block); y++ {
+		for x := 0; x < len(block); x++ {
 			block[y][x] = getValInBox(block[y][x], box)
 		}
 	}
@@ -106,7 +106,7 @@ func shiftArr(arr []byte, shift int) []byte {
 }
 
 func shiftBlock(block [][]byte) [][]byte {
-	for y := 1; y < 4; y++ {
+	for y := 1; y < len(block); y++ {
 		block[y] = shiftArr(block[y], y)
 	}
 	return block
@@ -136,10 +136,10 @@ func mixColumns(block [][]byte, mulmatr [][]byte) [][]byte {
 		{0, 0, 0, 0},
 		{0, 0, 0, 0}}
 
-	for y := 0; y < 4; y++ {
-		for x := 0; x < 4; x++ {
+	for y := 0; y < len(block); y++ {
+		for x := 0; x < len(block); x++ {
 			var val byte = 0
-			for k := 0; k < 4; k++ {
+			for k := 0; k < len(block); k++ {
 				val ^= multHex(block[k][x], mulmatr[y][k])
 			}
 			res[y][x] = val
@@ -177,8 +177,8 @@ func genRoundKey(key [][]byte, round int) [][]byte {
 
 func reassemble(block [][]byte) string {
 	res := ""
-	for y := 0; y < 4; y++ {
-		for x := 0; x < 4; x++ {
+	for y := 0; y < len(block); y++ {
+		for x := 0; x < len(block); x++ {
 			res += complete(fmt.Sprintf("%x", block[x][y]), 2)
 		}
 	}
@@ -192,12 +192,11 @@ func crToBlocks(blocks [][][]byte, hexMes string, countBlocks int) [][][]byte {
 	ind := 0
 	for i := 0; i < countBlocks; i++ {
 		blocks[i] = make([][]byte, 4)
-		for j := 0; j < 4; j++ {
+		for j := 0; j < len(blocks[i]); j++ {
 			blocks[i][j] = make([]byte, 4)
 		}
-		for y := 0; y < 4; y++ {
-			for x := 0; x < 4; x++ {
-				//binNum := fmt.Sprintf("%b", hexMes[ind:ind+2])
+		for y := 0; y < len(blocks[i]); y++ {
+			for x := 0; x < len(blocks[i]); x++ {
 				num, _ := strconv.ParseInt(hexMes[ind:ind+2], 16, 64)
 				blocks[i][x][y] = byte(num)
 				ind += 2
@@ -223,8 +222,8 @@ func blockNewInstance(block [][]byte) [][]byte {
 }
 
 func invShiftBlock(block [][]byte) [][]byte {
-	for y := 1; y < 4; y++ {
-		block[y] = shiftArr(block[y], 4-y)
+	for y := 1; y < len(block); y++ {
+		block[y] = shiftArr(block[y], len(block)-y)
 	}
 	return block
 }
@@ -243,6 +242,7 @@ func AES_crypt(mes string, key string) string {
 	var blocks [][][]byte
 	var stateKey [][]byte
 	var roundKeys [][][]byte
+	res := ""
 
 	bitMes := pad(mesToBits(mes), 128)
 	blocks = divMesIntoBlocks(blocks, bitMes, len(bitMes)/128)
@@ -268,9 +268,7 @@ func AES_crypt(mes string, key string) string {
 		blocks[i] = subBytes(blocks[i], sbox)
 		blocks[i] = shiftBlock(blocks[i])
 		blocks[i] = addKey(blocks[i], roundKeys[len(roundKeys)-1])
-	}
-	res := ""
-	for i := 0; i < len(blocks); i++ {
+
 		res += reassemble(blocks[i])
 	}
 
