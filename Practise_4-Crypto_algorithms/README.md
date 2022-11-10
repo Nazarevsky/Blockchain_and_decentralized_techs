@@ -1,6 +1,6 @@
 # Practise_4-Crypto_algorithms
 Обрання варіантів у додатку здійснюється за рахунок натискання потрібної кнопки (цифра) та натисканні клавіші Enter</br>
-Роботу поділено на п'ять файлів: main.go, AES.go (/cription/AES.go), RSA.go (/cription/RSA.go), Vigenere.go (/cription/Vigenere.go) та arrays.go (/cription/arrays.go), де AES.go - бібліотека для 
+Роботу поділено на п'ять файлів: main.go, AES.go (cription/AES.go), RSA.go (cription/RSA.go), Vigenere.go (cription/Vigenere.go) та arrays.go (cription/arrays.go), де AES.go - бібліотека для 
 шифрування значень за алгоритмом AES, RSA - бібліотека для шифрування значень за алгоритмом RSA (шифрує тільки невеликі беззнакові числа), Vigenere - бібліотека 
 для шифрування значень за алгоритмом Віженера, main.go - CLI для використання бібліотек, arrays.go - зберігання масивів для алгоритму AES.<br/>
 <br/>
