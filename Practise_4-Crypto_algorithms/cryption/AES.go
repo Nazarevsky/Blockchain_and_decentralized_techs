@@ -238,7 +238,7 @@ func hexToString(block [][]byte) string {
 	return res
 }
 
-func AES_crypt(mes string, key string) string {
+func AES_encrypt(mes string, key string) string {
 	var blocks [][][]byte
 	var stateKey [][]byte
 	var roundKeys [][][]byte

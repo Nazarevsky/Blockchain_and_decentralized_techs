@@ -16,6 +16,16 @@ func padKey(key string, needLen int) string {
 	return key
 }
 
+func remSpaces(mes string) string {
+	res := ""
+	for i := 0; i < len(mes); i++ {
+		if mes[i] != 32 {
+			res += string(mes[i])
+		}
+	}
+	return res
+}
+
 func toUpper(l byte) byte {
 	return 65 + (l - 97)
 }
@@ -34,13 +44,6 @@ func getEncrLetter(mesLet, keyLet byte) byte {
 	return mesLet
 }
 
-func absSub(a, b byte) byte {
-	if a > b {
-		return a - b
-	}
-	return b - a
-}
-
 func getDecrLetter(mesLet, keyLet byte) byte {
 	if mesLet >= 65 && mesLet <= 90 { // bouds for capital letters
 		return ((mesLet-keyLet)+130)%26 + 65
@@ -53,7 +56,7 @@ func getDecrLetter(mesLet, keyLet byte) byte {
 
 func VigenereEncode(mes, key string) string {
 	var res string
-	key = padKey(key, len(mes))
+	key = padKey(remSpaces(key), len(mes))
 
 	for i := 0; i < len(mes); i++ {
 		res += string(getEncrLetter(mes[i], key[i]))
@@ -64,7 +67,7 @@ func VigenereEncode(mes, key string) string {
 
 func VigenereDecode(mes, key string) string {
 	var res string
-	key = padKey(key, len(mes))
+	key = padKey(remSpaces(key), len(mes))
 
 	for i := 0; i < len(mes); i++ {
 		res += string(getDecrLetter(mes[i], key[i]))
