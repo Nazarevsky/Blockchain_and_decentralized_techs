@@ -31,7 +31,7 @@ func ClearConsole() {
 func task1() {
 	for true {
 		ClearConsole()
-		fmt.Println("Введіть значення для шифрування (Vigenere)")
+		fmt.Println("Введіть значення для шифрування (Vigenere, тільки латинська абетка)")
 		var mes string
 		scann.Scan()
 		mes = scann.Text()
