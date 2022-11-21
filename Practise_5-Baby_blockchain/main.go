@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
-	println(ecdsa.PrivKeyToString(ecdsa.GenPrivKey()))
+	//println(ecdsa.PrivKeyToString(ecdsa.GenPrivKey()))
+	ecdsa.GenPublKey()
 }
