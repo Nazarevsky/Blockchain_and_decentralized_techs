@@ -106,18 +106,32 @@ func isPointEqual(p1, p2 Point) bool {
 }
 
 func add(p1, p2 Point) Point {
-	if isPointEqual(p1, p2) { // try to check this: remove and run. If similar, it`s correct
-		return double(p1)
-	}
+	// if isPointEqual(p1, p2) { // try to check this: remove and run. If similar, it`s correct
+	// 	return double(p1)
+	// }
 	var res Point
+
 	// slope
-	//slope = ((point1[:y] - point2[:y]) * inverse(point1[:x] - point2[:x], $p)) % $p
 	up := big.NewInt(0).Sub(p1.y, p2.y)
 	p1xsp2x := big.NewInt(0).Sub(p1.x, p2.x)
 	down := inverse(p1xsp2x, p)
 	umd := big.NewInt(0).Mul(up, down)
 	s := big.NewInt(0).Mod(umd, p)
-	println(s.String())
+
+	// x (slope ** 2 - point1[:x] - point2[:x]) % $p
+	s2 := big.NewInt(0).Mul(s, s)
+	s2sp1x := big.NewInt(0).Sub(s2, p1.x)
+	s2sp1xp2x := big.NewInt(0).Sub(s2sp1x, p2.x)
+	x := big.NewInt(0).Mod(s2sp1xp2x, p)
+
+	// y ((slope * (point1[:x] - x)) - point1[:y]) % $p
+	p1xsx := big.NewInt(0).Sub(p1.x, x)
+	smp1xsx := big.NewInt(0).Mul(s, p1xsx)
+	smp1xsxsp1y := big.NewInt(0).Sub(smp1xsx, p1.y)
+	y := big.NewInt(0).Mod(smp1xsxsp1y, p)
+
+	res.x = x
+	res.y = y
 	return res
 }
 
@@ -137,7 +151,9 @@ func GenPublKey() { //key *big.Int
 
 	var b Point
 	b.x = big.NewInt(1)
-	b.y = big.NewInt(32)
+	b.y = big.NewInt(2)
 
-	add(a, b)
+	c := add(a, b)
+	println(c.x.String())
+	println(c.y.String())
 }
