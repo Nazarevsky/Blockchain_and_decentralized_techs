@@ -135,6 +135,65 @@ func add(p1, p2 Point) Point {
 	return res
 }
 
+func inv(a, m int) int {
+	mOrig := m
+	y := 0
+	x := 1
+
+	for a > 1 {
+		q := a / m
+		temp := m
+
+		m = a % m
+		a = temp // remove???
+		temp = y
+
+		y = x - q*y
+		x = temp
+	}
+
+	if x < 0 {
+		x += mOrig
+	}
+	return x
+}
+
+type P struct {
+	x, y int
+}
+
+var a1 int = 0
+var b1 int = 7
+var n1 int = 10
+var _p int = 47
+
+func mod(a, m int) int {
+	if a < 0 {
+		return (a * -1) % m
+	}
+	return 1 % m
+}
+
+func dbl(p P) P {
+	slope := ((3*p.x*p.x + a1) * inv(2*p.y, _p)) % _p
+	x := (slope*slope - (2 * p.x)) % _p
+	y := (slope*(p.x-x) - p.y) % _p
+	var res P
+	res.x = x
+	res.y = y
+	return res
+}
+
+func ad(p1, p2 P) P {
+	slope := ((p1.y - p2.y) * inv(p1.x-p2.x, _p)) % _p
+	x := (slope*slope - p1.x - p2.x) % _p
+	y := ((slope * (p1.x - x)) - p1.y) % _p
+	var res P
+	res.x = x
+	res.y = y
+	return res
+}
+
 func GenPublKey() { //key *big.Int
 	a = big.NewInt(0)
 	a = big.NewInt(7)
@@ -153,7 +212,18 @@ func GenPublKey() { //key *big.Int
 	b.x = big.NewInt(1)
 	b.y = big.NewInt(2)
 
-	c := add(a, b)
-	println(c.x.String())
-	println(c.y.String())
+	//c := add(a, b)
+	// println(c.x.String())
+	// println(c.y.String())
+
+	var a_ P
+	a_.x = 1
+	a_.y = 2
+
+	var b_ P
+	a_.x = 1
+	a_.y = 2
+
+	r := ad(a_, b_)
+	println(r.x, r.y)
 }
