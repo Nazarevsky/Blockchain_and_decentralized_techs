@@ -45,6 +45,10 @@ type Point struct {
 
 var G Point
 
+type P struct {
+	x, y int
+}
+
 func inverse(a, m *big.Int) *big.Int {
 	mOrig := m
 	y := big.NewInt(0)
@@ -53,10 +57,10 @@ func inverse(a, m *big.Int) *big.Int {
 	bigOne := big.NewInt(1)
 	for a.Cmp(bigOne) == 1 {
 		q := big.NewInt(0).Div(a, m)
-		temp := m
 
+		temp := m
 		m = big.NewInt(0).Rem(a, m)
-		a = temp // remove???
+		a = temp
 		temp = y
 
 		qmuly := big.NewInt(0).Mul(q, y)
@@ -76,8 +80,7 @@ func double(point Point) Point {
 	x2m3 := big.NewInt(0).Mul(x2, big.NewInt(3))
 	up := big.NewInt(0).Add(x2m3, a)
 	ym2 := big.NewInt(0).Mul(point.y, big.NewInt(2))
-	invym2 := inverse(ym2, p)
-	down := big.NewInt(0).Mod(invym2, p)
+	down := inverse(ym2, p)
 	umd := big.NewInt(0).Mul(up, down)
 	s := big.NewInt(0).Mod(umd, p)
 
@@ -106,7 +109,7 @@ func isPointEqual(p1, p2 Point) bool {
 }
 
 func add(p1, p2 Point) Point {
-	if isPointEqual(p1, p2) { // try to check this: remove and run. If similar, it`s correct
+	if isPointEqual(p1, p2) {
 		return double(p1)
 	}
 	var res Point
@@ -118,13 +121,13 @@ func add(p1, p2 Point) Point {
 	umd := big.NewInt(0).Mul(up, down)
 	s := big.NewInt(0).Mod(umd, p)
 
-	// x (slope ** 2 - point1[:x] - point2[:x]) % $p
+	// x
 	s2 := big.NewInt(0).Mul(s, s)
 	s2sp1x := big.NewInt(0).Sub(s2, p1.x)
 	s2sp1xp2x := big.NewInt(0).Sub(s2sp1x, p2.x)
 	x := big.NewInt(0).Mod(s2sp1xp2x, p)
 
-	// y ((slope * (point1[:x] - x)) - point1[:y]) % $p
+	// y
 	p1xsx := big.NewInt(0).Sub(p1.x, x)
 	smp1xsx := big.NewInt(0).Mul(s, p1xsx)
 	smp1xsxsp1y := big.NewInt(0).Sub(smp1xsx, p1.y)
@@ -135,68 +138,9 @@ func add(p1, p2 Point) Point {
 	return res
 }
 
-func inv(a, m int) int {
-	mOrig := m
-	y := 0
-	x := 1
-
-	for a > 1 {
-		q := a / m
-		temp := m
-
-		m = a % m
-		a = temp // remove???
-		temp = y
-
-		y = x - q*y
-		x = temp
-	}
-
-	if x < 0 {
-		x += mOrig
-	}
-	return x
-}
-
-type P struct {
-	x, y int
-}
-
-var a1 int = 0
-var b1 int = 7
-var n1 int = 10
-var _p int = 47
-
-func mod(a, m int) int {
-	if a < 0 {
-		return m - ((a * -1) % m)
-	}
-	return 1 % m
-}
-
-func dbl(p P) P {
-	slope := mod(((3*p.x*p.x + a1) * inv(2*p.y, _p)), _p)
-	x := mod((slope*slope - (2 * p.x)), _p)
-	y := mod((slope*(p.x-x) - p.y), _p)
-	var res P
-	res.x = x
-	res.y = y
-	return res
-}
-
-func ad(p1, p2 P) P {
-	slope := mod(((p1.y - p2.y) * inv(p1.x-p2.x, _p)), _p)
-	x := mod((slope*slope - p1.x - p2.x), _p)
-	y := mod(((slope * (p1.x - x)) - p1.y), _p)
-	var res P
-	res.x = x
-	res.y = y
-	return res
-}
-
 func GenPublKey() { //key *big.Int
 	a = big.NewInt(0)
-	a = big.NewInt(7)
+	b = big.NewInt(7)
 	p = big.NewInt(47)
 	n = big.NewInt(10)
 	//p, _ = big.NewInt(0).SetString("115792089237316195423570985008687907853269984665640564039457584007908834671663", 10)
@@ -214,21 +158,8 @@ func GenPublKey() { //key *big.Int
 	b.x = big.NewInt(1)
 	b.y = big.NewInt(2)
 
-	c := add(a, b)
+	c := double(a)
 	println(c.x.String(), c.y.String())
-	c = double(a)
+	c = add(a, b)
 	println(c.x.String(), c.y.String())
-
-	var a_ P
-	a_.x = 1
-	a_.y = 2
-
-	var b_ P
-	b_.x = 1
-	b_.y = 2
-
-	r := ad(a_, b_)
-	println(r.x, r.y)
-	r = dbl(a_)
-	println(r.x, r.y)
 }
