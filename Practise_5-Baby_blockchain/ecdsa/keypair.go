@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
+	"strings"
 	"time"
 )
-
-var symbols string = "0123456789abcdef"
 
 func bigToHex(num *big.Int) string {
 	return fmt.Sprintf("%x", num)
@@ -18,16 +17,11 @@ func hexToBig(hex string) *big.Int {
 	return val
 }
 
-func GenPrivKey() *big.Int {
+func GenPrivKey() string {
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
-	hexPriv := ""
-	hexPriv += string(symbols[r.Intn(15)+1])
-
-	for i := 1; i < 64; i++ {
-		hexPriv += string(symbols[r.Intn(16)])
-	}
-	return hexToBig(hexPriv)
+	rrr := big.NewInt(1).Rand(r, n)
+	return bigToHex(rrr)
 }
 
 func PrivKeyToString(key *big.Int) string {
@@ -43,47 +37,55 @@ type Point struct {
 	x, y *big.Int
 }
 
-var G Point
+var g Point
 
 type P struct {
 	x, y int
 }
 
+func InitValues() {
+	a = big.NewInt(0)
+	b = big.NewInt(7)
+	p, _ = big.NewInt(0).SetString("115792089237316195423570985008687907853269984665640564039457584007908834671663", 10)
+	n, _ = big.NewInt(0).SetString("115792089237316195423570985008687907852837564279074904382605163141518161494337", 10)
+	g.x, _ = big.NewInt(0).SetString("55066263022277343669578718895168534326250603453777594175500187360389116729240", 10)
+	g.y, _ = big.NewInt(0).SetString("32670510020758816978083085130507043184471273380659243275938904335757337482424", 10)
+}
+
 func inverse(a, m *big.Int) *big.Int {
-	mOrig := m
-	y := big.NewInt(0)
-	x := big.NewInt(1)
+	prevY := big.NewInt(0)
+	y := big.NewInt(1)
+
+	if a.Cmp(big.NewInt(0)) == -1 {
+		a = big.NewInt(0).Mod(a, m)
+	}
 
 	bigOne := big.NewInt(1)
 	for a.Cmp(bigOne) == 1 {
-		q := big.NewInt(0).Div(a, m)
-
-		temp := m
-		m = big.NewInt(0).Rem(a, m)
-		a = temp
-		temp = y
+		q := big.NewInt(0).Div(m, a)
 
 		qmuly := big.NewInt(0).Mul(q, y)
-		y = big.NewInt(0).Sub(x, qmuly)
-		x = temp
+		tempY := y
+		y = big.NewInt(0).Sub(prevY, qmuly)
+		prevY = tempY
+
+		tempa := a
+		a = big.NewInt(0).Rem(m, a)
+		m = tempa
 	}
 
-	if x.Cmp(big.NewInt(0)) == -1 {
-		x = big.NewInt(0).Add(x, mOrig)
-	}
-	return x
+	return y
 }
 
 func double(point Point) Point {
 	// slope
 	x2 := big.NewInt(0).Mul(point.x, point.x)
-	x2m3 := big.NewInt(0).Mul(x2, big.NewInt(3))
+	x2m3 := big.NewInt(1).Mul(x2, big.NewInt(3))
 	up := big.NewInt(0).Add(x2m3, a)
 	ym2 := big.NewInt(0).Mul(point.y, big.NewInt(2))
 	down := inverse(ym2, p)
 	umd := big.NewInt(0).Mul(up, down)
 	s := big.NewInt(0).Mod(umd, p)
-
 	// x
 	s2 := big.NewInt(0).Mul(s, s)
 	xm2 := big.NewInt(0).Mul(point.x, big.NewInt(2))
@@ -138,28 +140,51 @@ func add(p1, p2 Point) Point {
 	return res
 }
 
-func GenPublKey() { //key *big.Int
-	a = big.NewInt(0)
-	b = big.NewInt(7)
-	p = big.NewInt(47)
-	n = big.NewInt(10)
-	//p, _ = big.NewInt(0).SetString("115792089237316195423570985008687907853269984665640564039457584007908834671663", 10)
-	//n, _ = big.NewInt(0).SetString("115792089237316195423570985008687907852837564279074904382605163141518161494337", 10)
-	// x, _ := big.NewInt(0).SetString("55066263022277343669578718895168534326250603453777594175500187360389116729240", 10)
-	// y, _ := big.NewInt(0).SetString("32670510020758816978083085130507043184471273380659243275938904335757337482424", 10)
-	// G.x = x
-	// G.y = y
+func multiply(pk *big.Int, p Point) Point {
+	currP := p
+	pkBin := fmt.Sprintf("%b", pk)
+	for i := 1; i < len(pkBin); i++ {
+		currP = double(currP)
+		if pkBin[i] == '1' {
+			currP = add(currP, p)
+		}
+	}
+	return currP
+}
 
-	var a Point
-	a.x = big.NewInt(1)
-	a.y = big.NewInt(2)
+func fillZero(str string, needLen int) string {
+	return strings.Repeat("0", needLen-len(str)) + str
+}
 
-	var b Point
-	b.x = big.NewInt(1)
-	b.y = big.NewInt(2)
+func compressPubKey(p Point) string {
+	xStrHex := fillZero(bigToHex(p.x), 64)
+	if big.NewInt(0).Mod(p.y, big.NewInt(2)).Cmp(big.NewInt(0)) == 0 {
+		return "02" + xStrHex
+	} else {
+		return "03" + xStrHex
+	}
+}
 
-	c := double(a)
-	println(c.x.String(), c.y.String())
-	c = add(a, b)
-	println(c.x.String(), c.y.String())
+func decompressPubKey(s string) Point {
+	pref := s[:2]
+	x, _ := big.NewInt(0).SetString(s[2:], 16)
+	// y**2 = x**3 + b, a == 0
+	ysquared := big.NewInt(0).Mod(big.NewInt(0).Add(big.NewInt(0).Exp(x, big.NewInt(3), nil), b), p)
+	// y = (y**2)**((p+1)/4)
+	y := big.NewInt(0).Exp(ysquared, big.NewInt(0).Div(big.NewInt(0).Add(p, big.NewInt(1)), big.NewInt(4)), p)
+	if (pref == "02" && big.NewInt(0).Mod(y, big.NewInt(2)).Cmp(big.NewInt(0)) != 0) ||
+		(pref == "03" && big.NewInt(0).Mod(y, big.NewInt(2)).Cmp(big.NewInt(0)) == 0) {
+		y = big.NewInt(0).Mod(big.NewInt(0).Sub(p, y), p)
+	}
+
+	var p Point
+	p.x = x
+	p.y = y
+	return p
+}
+
+func GenPubKey(privK string) string {
+	privKey := hexToBig(privK)
+	p := multiply(privKey, g)
+	return compressPubKey(p)
 }
