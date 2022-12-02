@@ -37,6 +37,10 @@ type Point struct {
 	x, y *big.Int
 }
 
+type KeyPair struct {
+	PrivKey, PublKey string
+}
+
 var g Point
 
 type P struct {
@@ -187,4 +191,11 @@ func GenPubKey(privK string) string {
 	privKey := hexToBig(privK)
 	p := multiply(privKey, g)
 	return compressPubKey(p)
+}
+
+func GenKeyPair() KeyPair {
+	var kp KeyPair
+	kp.PrivKey = GenPrivKey()
+	kp.PublKey = GenPubKey(kp.PrivKey)
+	return kp
 }
