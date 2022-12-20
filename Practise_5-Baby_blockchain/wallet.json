@@ -4,12 +4,8 @@
         "HashPass": "9ee036287b4cfbcfa3b5bbfcf92d46eb5e75df96",
         "KeyPairList": [
             {
-                "PrivKey": "627df6483c90d0e0994b8fda07ddb81647f79f1bd262509ef10555b58e27aaa9f5988888c167d2f77f54a77531a7403e7240801c733b10643696e7ac0c340e9d",
-                "PublKey": "03265af825325d3c07156142a5906235547855eda0499ca2e4cad729eebd67898d"
-            },
-            {
-                "PrivKey": "05712978d681aa7b39bb544d595fb5ebfef11c3c62cfe50fdb39509e17fcecad34e1c8377f28f89a6a99f14942f804724e23da178fbe9664970567f73b535998",
-                "PublKey": "03c097cf69b7af3979debef3de08b5c471d6aac6692ef678fafea2c28a20f9d42a"
+                "PrivKey": "9fadc3d18767480e21a6e33257f26da7ba3d9c74c57ab8e4131d04e9293d655bbf3a320a3caa3c2adcbded571c8bc58e7e173d6e45d17108d05483d673425e80",
+                "PublKey": "03c66667101e5aecdcd5a0b86d21445b98d6862165b0cd4599a58a2f87f9d14cc5"
             }
         ]
     },

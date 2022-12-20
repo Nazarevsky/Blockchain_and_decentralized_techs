@@ -4,6 +4,7 @@ import (
 	"bavovnacoin/account"
 	"bavovnacoin/ecdsa"
 	"bavovnacoin/hashing"
+	"bavovnacoin/transaction"
 )
 
 // Function for demonstrating key pair and signature generation
@@ -29,37 +30,69 @@ func ecdsaExample() {
 	}
 }
 
-func main() {
+// Function to demonstate account and wallet operations
+// (for Step 3 baby blockchain realization)
+func walletAndAccountExample() {
 	// account.GenAccount("abc1")
 	// account.GenAccount("abc2")
 	// account.GenAccount("abc3")
 	// account.GenAccount("abc4")
-	account.InitUTXOValues()             // Getting UTXO
-	account.InitAccountsData()           // Getting account data from json file
-	accInd := account.GetAccountInd("1") // Choosing account to work with
+	account.InitUTXOValues()               // Getting UTXO
+	account.InitAccountsData()             // Getting account data from json file
+	isAccExist := account.InitAccount("1") // Initialization account to work with
 	//account.AddKeyPairToAccount(accInd, "abc1")
-
-	account.PrintBalance(accInd)
-	account.PrintBalance(3)
-	res := account.CreatePaymentOp(accInd, "02db1c6c791978448ef671746fab54797495597730b9a68721fca780db002162f0", 10000, "abc1")
-	if res != "" {
-		println(res)
-	} else {
-		account.PrintBalance(accInd)
-		account.PrintBalance(3)
-	}
-
-	mes := "Transaction here"
-	hashMes := hashing.SHA1(mes)
-	sign, err := account.SignData(accInd, hashMes, 0, "abc1")
-	if err {
-		println("Wrong password")
-	} else {
-		verifRes := account.VerifData(accInd, hashMes, 0, sign)
-		if verifRes {
-			println("Transaction is verified")
+	if isAccExist {
+		account.PrintBalance()
+		res := account.CreatePaymentOp("02db1c6c791978448ef671746fab54797495597730b9a68721fca780db002162f0", 10000, "abc1")
+		if res != "" {
+			println(res)
 		} else {
-			println("Transaction is not verified")
+			account.PrintBalance()
 		}
+
+		mes := "Transaction here"
+		hashMes := hashing.SHA1(mes)
+		sign, err := account.SignData(hashMes, 0, "abc1")
+		if err {
+			println("Wrong password")
+		} else {
+			verifRes := account.VerifData(hashMes, 0, sign)
+			if verifRes {
+				println("Transaction is verified")
+			} else {
+				println("Transaction is not verified")
+			}
+		}
+	} else {
+		println("Such an account is not exists")
+	}
+}
+
+func main() {
+	account.InitAccountsData() // Getting account data from json file
+	account.InitUTXOValues()   // Getting UTXO
+	isAccExists := account.InitAccount("1")
+	account.PrintBalance()
+	if isAccExists {
+		tx, resMes := transaction.CreateTransaction("abc1",
+			[]string{"0284cbd0bcf8a34035b71c5a72e37924cb960aaa0b69df4c41d50628734b8e1408",
+				"02487318bd34dc641708fd3300e2f5cca03cebe9ce7bea8973a40fc5b383de951d"},
+			[]uint64{458, 200},
+			14)
+		if resMes == "" {
+			transaction.PrintTransaction(tx)
+		} else {
+			println(resMes)
+		}
+		println()
+
+		txVerifRes := transaction.VerifyTransaction(tx)
+		if txVerifRes {
+			println("Transaction is valid")
+		} else {
+			println("Transaction is not valid")
+		}
+	} else {
+		println("Account is not found")
 	}
 }
