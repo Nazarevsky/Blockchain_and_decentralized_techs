@@ -5,6 +5,7 @@ import (
 	"bavovnacoin/cryption"
 	"bavovnacoin/ecdsa"
 	"bavovnacoin/hashing"
+	"bavovnacoin/utxo"
 	"fmt"
 )
 
@@ -25,8 +26,13 @@ type Transaction struct {
 	Outputs []Output
 }
 
+type UtxoForInput struct {
+	Address string
+	Index   int
+}
+
 // Generating message for signing (SCRIPTHASH_ALL)
-func getHashOfTxFields(tx Transaction) string {
+func GetCatTxFields(tx Transaction) string {
 	message := ""
 	message += fmt.Sprint(tx.Version)
 	for i := 0; i < len(tx.Inputs); i++ {
@@ -37,11 +43,11 @@ func getHashOfTxFields(tx Transaction) string {
 		message += tx.Outputs[i].HashAdr
 		message += fmt.Sprint(tx.Outputs[i].Sum)
 	}
-	return hashing.SHA1(message)
+	return message
 }
 
 func genTxScriptSignatures(keyPair []ecdsa.KeyPair, passKey string, tx Transaction) Transaction {
-	message := getHashOfTxFields(tx)
+	message := hashing.SHA1(GetCatTxFields(tx))
 	// Signing message
 	for i := 0; i < len(keyPair); i++ {
 		tx.Inputs[i].ScriptSig = keyPair[i].PublKey + ecdsa.Sign(message, cryption.AES_decrypt(keyPair[i].PrivKey, passKey))
@@ -65,6 +71,54 @@ func computeTxSize(tx Transaction) int {
 		size += len(tx.Outputs[i].HashAdr)
 	}
 	return size
+}
+
+func getNextInpIndex(addressInp string, utxoInputs []utxo.UTXO, utxoInd int) int {
+	ind := -1
+	for i := 0; i <= utxoInd; i++ {
+		if utxoInputs[i].PubKey == addressInp {
+			ind++
+		}
+	}
+	return ind
+}
+
+/*
+Algorithm of effective transaction inputs search:
+iterate utxo of a specific account and check two neighboring values.
+At the beginning we add a stub UTXO (it will not be added to the database).
+We are looking for a minimum value (checking left neighbor)
+that is higher or equal to the required sum (minus sum that we have already found).
+If a right neighbor is less than needed sum, we keep iterating, because there is a chance
+of finding better variant.
+*/
+func GetTransInputs(sum uint64, accUtxo []utxo.UTXO) ([]UtxoForInput, []utxo.UTXO, uint64) {
+	if accUtxo == nil {
+		accUtxo = account.GetAccUtxo()
+	}
+
+	accUtxo = append(accUtxo, utxo.UTXO{PubKey: "", Sum: 0}) // Stub value for searching
+	var utxoInput []UtxoForInput
+	tempSum := uint64(0)
+
+	if len(accUtxo) == 1 && accUtxo[0].Sum >= sum {
+		return append(utxoInput, UtxoForInput{accUtxo[0].PubKey, getNextInpIndex(accUtxo[0].PubKey, accUtxo, 0)}),
+			accUtxo, accUtxo[0].Sum
+	}
+
+	for i := 1; i < len(accUtxo); i++ {
+		if accUtxo[i-1].Sum >= sum-tempSum {
+			if sum-tempSum > accUtxo[i].Sum {
+				utxoInput = append(utxoInput, UtxoForInput{Address: accUtxo[i-1].PubKey, Index: getNextInpIndex(accUtxo[i-1].PubKey, accUtxo, i-1)})
+				return utxoInput, accUtxo, accUtxo[i-1].Sum + tempSum
+			} else {
+				continue
+			}
+		}
+		utxoInput = append(utxoInput, UtxoForInput{accUtxo[i-1].PubKey, getNextInpIndex(accUtxo[i-1].PubKey, accUtxo, i-1)})
+		tempSum += accUtxo[i-1].Sum
+	}
+	return nil, accUtxo, tempSum
 }
 
 // Creates transaction
@@ -96,7 +150,7 @@ func CreateTransaction(passKey string, outAdr []string, outSumVals []uint64, fee
 	var kpForSign []ecdsa.KeyPair
 	for outTxSum < needSum { // Looking for tx fee
 		kpForSign = []ecdsa.KeyPair{}
-		inputs, _, outSum := account.GetTransInputs(needSum, nil)
+		inputs, _, outSum := GetTransInputs(needSum, nil)
 
 		if needSum > outSum {
 			return tx, "Not enough coins for payment. You need: " + fmt.Sprint(needSum) + ", you have: " + fmt.Sprint(account.GetBalance())
@@ -135,6 +189,10 @@ func CreateTransaction(passKey string, outAdr []string, outSumVals []uint64, fee
 	return tx, ""
 }
 
+func TransactionToString(tx Transaction) {
+
+}
+
 /*
 Just to show that everything works fine.
 
@@ -165,7 +223,7 @@ func PrintTransaction(tx Transaction) {
 func VerifyTransaction(tx Transaction) bool {
 	if tx.Version == 0 {
 		var inpSum uint64
-		hashMesOfTx := getHashOfTxFields(tx)
+		hashMesOfTx := hashing.SHA1(GetCatTxFields(tx))
 
 		// Checking signatures
 		for i := 0; i < len(tx.Inputs); i++ {
@@ -189,4 +247,37 @@ func VerifyTransaction(tx Transaction) bool {
 		}
 	}
 	return true
+}
+
+// Future realization: transaction creation.
+// A stub operation just for demo of account work
+func CreatePaymentOp(recieverAdr string, sum uint64, pass string) string {
+	if account.CurrAccount.HashPass != hashing.SHA1(pass) {
+		return "Wrong password"
+	}
+	account.GetBalance()
+	if sum > account.CurrAccount.Balance {
+		return "Not enough coins to make a payment operation"
+	}
+	if sum < 0 {
+		return "Incorrect value of sum of the operation"
+	}
+
+	accUtxo := account.GetAccUtxo()
+	transInputs, accUtxo, inpSum := GetTransInputs(sum, accUtxo)
+	if transInputs != nil {
+		utxo.UtxoList = append(utxo.UtxoList, utxo.UTXO{PubKey: recieverAdr, Sum: sum}) // Send coins
+
+		if inpSum-sum != 0 { // generating change
+			accKeys := account.CurrAccount.KeyPairList
+			account.AddKeyPairToAccount(pass) // generate new keypair for the change
+			utxo.UtxoList = append(utxo.UtxoList,
+				utxo.UTXO{Id: utxo.UtxoList[len(utxo.UtxoList)-1].Id + 1,
+					PubKey: account.CurrAccount.KeyPairList[len(accKeys)].PublKey, Sum: inpSum - sum})
+		}
+	} else {
+		return "Not enough coins for sending."
+	}
+
+	return ""
 }

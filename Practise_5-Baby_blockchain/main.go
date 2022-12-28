@@ -2,9 +2,13 @@ package main
 
 import (
 	"bavovnacoin/account"
+	"bavovnacoin/blockchain"
 	"bavovnacoin/ecdsa"
 	"bavovnacoin/hashing"
 	"bavovnacoin/transaction"
+	"bavovnacoin/utxo"
+	"fmt"
+	"math/big"
 )
 
 // Function for demonstrating key pair and signature generation
@@ -37,13 +41,13 @@ func walletAndAccountExample() {
 	// account.GenAccount("abc2")
 	// account.GenAccount("abc3")
 	// account.GenAccount("abc4")
-	account.InitUTXOValues()               // Getting UTXO
+	utxo.InitUTXOValues()                  // Getting UTXO
 	account.InitAccountsData()             // Getting account data from json file
 	isAccExist := account.InitAccount("1") // Initialization account to work with
 	//account.AddKeyPairToAccount(accInd, "abc1")
 	if isAccExist {
 		account.PrintBalance()
-		res := account.CreatePaymentOp("02db1c6c791978448ef671746fab54797495597730b9a68721fca780db002162f0", 10000, "abc1")
+		res := transaction.CreatePaymentOp("02db1c6c791978448ef671746fab54797495597730b9a68721fca780db002162f0", 10000, "abc1")
 		if res != "" {
 			println(res)
 		} else {
@@ -68,9 +72,11 @@ func walletAndAccountExample() {
 	}
 }
 
-func main() {
+// Function to demonstate transaction operations
+// (for Step 4 baby blockchain realization)
+func transactionExample() {
 	account.InitAccountsData() // Getting account data from json file
-	account.InitUTXOValues()   // Getting UTXO
+	utxo.InitUTXOValues()      // Getting UTXO
 	isAccExists := account.InitAccount("1")
 	account.PrintBalance()
 	if isAccExists {
@@ -95,4 +101,25 @@ func main() {
 	} else {
 		println("Account is not found")
 	}
+}
+
+func findNonce() {
+	mes := "Hello world"
+	target := new(big.Int)
+	target.SetString("0000400000000000000000000000000000000000", 16)
+	hashmesNonceBig := new(big.Int)
+	hashmesNonceBig.SetString(hashing.SHA1(mes+fmt.Sprint(0)), 16)
+	n := 1
+	//println(hashing.SHA1(mes + fmt.Sprint(n)))
+	for ; hashmesNonceBig.Cmp(target) == 1; n++ {
+		hashmesNonceBig.SetString(hashing.SHA1(mes+fmt.Sprint(n)), 16)
+	}
+	println(n)
+	println(fmt.Sprintf("%x", target))
+	println(fmt.Sprintf("%x", hashmesNonceBig))
+}
+
+func main() {
+	//findNonce()
+	blockchain.CreateBlock(0, "", nil, "")
 }
