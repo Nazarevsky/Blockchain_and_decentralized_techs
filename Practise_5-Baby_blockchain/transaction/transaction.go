@@ -21,9 +21,10 @@ type Output struct {
 }
 
 type Transaction struct {
-	Version int
-	Inputs  []Input
-	Outputs []Output
+	Version  uint
+	Locktime uint
+	Inputs   []Input
+	Outputs  []Output
 }
 
 type UtxoForInput struct {
@@ -35,6 +36,7 @@ type UtxoForInput struct {
 func GetCatTxFields(tx Transaction) string {
 	message := ""
 	message += fmt.Sprint(tx.Version)
+	message += fmt.Sprint(tx.Locktime)
 	for i := 0; i < len(tx.Inputs); i++ {
 		message += tx.Inputs[i].HashAdr
 		message += fmt.Sprint(tx.Inputs[i].OutInd)
@@ -56,9 +58,9 @@ func genTxScriptSignatures(keyPair []ecdsa.KeyPair, passKey string, tx Transacti
 	return tx
 }
 
-func computeTxSize(tx Transaction) int {
+func ComputeTxSize(tx Transaction) int {
 	size := 0
-	size += len(fmt.Sprint(tx.Version))
+	size += 8 // 4 bytes for Version, 4 for locktime
 	for i := 0; i < len(tx.Inputs); i++ {
 		size += len(tx.Inputs[i].ScriptSig)
 		size += 4 // Input out index size
@@ -76,7 +78,7 @@ func computeTxSize(tx Transaction) int {
 func getNextInpIndex(addressInp string, utxoInputs []utxo.UTXO, utxoInd int) int {
 	ind := -1
 	for i := 0; i <= utxoInd; i++ {
-		if utxoInputs[i].PubKey == addressInp {
+		if utxoInputs[i].Address == addressInp {
 			ind++
 		}
 	}
@@ -97,33 +99,34 @@ func GetTransInputs(sum uint64, accUtxo []utxo.UTXO) ([]UtxoForInput, []utxo.UTX
 		accUtxo = account.GetAccUtxo()
 	}
 
-	accUtxo = append(accUtxo, utxo.UTXO{PubKey: "", Sum: 0}) // Stub value for searching
+	accUtxo = append(accUtxo, utxo.UTXO{Address: "", Sum: 0}) // Stub value for searching
 	var utxoInput []UtxoForInput
 	tempSum := uint64(0)
 
 	if len(accUtxo) == 1 && accUtxo[0].Sum >= sum {
-		return append(utxoInput, UtxoForInput{accUtxo[0].PubKey, getNextInpIndex(accUtxo[0].PubKey, accUtxo, 0)}),
+		return append(utxoInput, UtxoForInput{accUtxo[0].Address, getNextInpIndex(accUtxo[0].Address, accUtxo, 0)}),
 			accUtxo, accUtxo[0].Sum
 	}
 
 	for i := 1; i < len(accUtxo); i++ {
 		if accUtxo[i-1].Sum >= sum-tempSum {
 			if sum-tempSum > accUtxo[i].Sum {
-				utxoInput = append(utxoInput, UtxoForInput{Address: accUtxo[i-1].PubKey, Index: getNextInpIndex(accUtxo[i-1].PubKey, accUtxo, i-1)})
+				utxoInput = append(utxoInput, UtxoForInput{Address: accUtxo[i-1].Address, Index: getNextInpIndex(accUtxo[i-1].Address, accUtxo, i-1)})
 				return utxoInput, accUtxo, accUtxo[i-1].Sum + tempSum
 			} else {
 				continue
 			}
 		}
-		utxoInput = append(utxoInput, UtxoForInput{accUtxo[i-1].PubKey, getNextInpIndex(accUtxo[i-1].PubKey, accUtxo, i-1)})
+		utxoInput = append(utxoInput, UtxoForInput{accUtxo[i-1].Address, getNextInpIndex(accUtxo[i-1].Address, accUtxo, i-1)})
 		tempSum += accUtxo[i-1].Sum
 	}
 	return nil, accUtxo, tempSum
 }
 
 // Creates transaction
-func CreateTransaction(passKey string, outAdr []string, outSumVals []uint64, feePerByte int) (Transaction, string) { // return Transaction
+func CreateTransaction(passKey string, outAdr []string, outSumVals []uint64, feePerByte int, locktime uint) (Transaction, string) { // return Transaction
 	var tx Transaction
+	tx.Locktime = locktime
 	txSize := 0
 	tx.Version = 0
 	genSum := uint64(0)
@@ -164,17 +167,15 @@ func CreateTransaction(passKey string, outAdr []string, outSumVals []uint64, fee
 
 			// Get private and public key for scriptSig generation
 			for j := 0; j < len(kpAcc); j++ {
-				if kpAcc[j].PublKey == inputs[i].Address {
+				if hashing.SHA1(kpAcc[j].PublKey) == inputs[i].Address {
 					kpForSign = append(kpForSign, ecdsa.KeyPair{PrivKey: kpAcc[j].PrivKey, PublKey: kpAcc[j].PublKey})
 				}
 			}
-
 			input = append(input, inpVal)
 		}
-
 		tx.Inputs = input
 		tx.Outputs = output
-		txSize = computeTxSize(tx)
+		txSize = ComputeTxSize(tx)
 		needSum = genSum + uint64(txSize)*uint64(feePerByte)
 	}
 
@@ -189,8 +190,24 @@ func CreateTransaction(passKey string, outAdr []string, outSumVals []uint64, fee
 	return tx, ""
 }
 
-func TransactionToString(tx Transaction) {
+func GetInputSum(inp []Input) uint64 {
+	var sum uint64 = 0
+	for i := 0; i < len(inp); i++ {
+		sum += account.GetBalByKeyHash(inp[i].HashAdr, inp[i].OutInd)
+	}
+	return sum
+}
 
+func GetOutputSum(out []Output) uint64 {
+	var sum uint64 = 0
+	for i := 0; i < len(out); i++ {
+		sum += out[i].Sum
+	}
+	return sum
+}
+
+func GetTxFee(tx Transaction) uint64 {
+	return GetInputSum(tx.Inputs) - GetOutputSum(tx.Outputs)
 }
 
 /*
@@ -201,6 +218,7 @@ but received in this function.
 */
 func PrintTransaction(tx Transaction) {
 	println("Transaction")
+	fmt.Printf("Version: %d\n Locktime %d\n", tx.Version, tx.Locktime)
 	println("Inputs:")
 	var inpSum uint64
 	for i := 0; i < len(tx.Inputs); i++ {
@@ -225,7 +243,7 @@ func VerifyTransaction(tx Transaction) bool {
 		var inpSum uint64
 		hashMesOfTx := hashing.SHA1(GetCatTxFields(tx))
 
-		// Checking signatures
+		// Checking signatures and unique inputs
 		for i := 0; i < len(tx.Inputs); i++ {
 			pubKey := tx.Inputs[i].ScriptSig[:66]
 			sign := tx.Inputs[i].ScriptSig[66:]
@@ -234,6 +252,12 @@ func VerifyTransaction(tx Transaction) bool {
 			}
 			curVal := account.GetBalByKeyHash(tx.Inputs[i].HashAdr, tx.Inputs[i].OutInd)
 			inpSum += curVal
+
+			for j := i + 1; j < len(tx.Inputs); j++ {
+				if tx.Inputs[j].ScriptSig == tx.Inputs[i].ScriptSig {
+					return false
+				}
+			}
 		}
 
 		var outSum uint64
@@ -247,37 +271,4 @@ func VerifyTransaction(tx Transaction) bool {
 		}
 	}
 	return true
-}
-
-// Future realization: transaction creation.
-// A stub operation just for demo of account work
-func CreatePaymentOp(recieverAdr string, sum uint64, pass string) string {
-	if account.CurrAccount.HashPass != hashing.SHA1(pass) {
-		return "Wrong password"
-	}
-	account.GetBalance()
-	if sum > account.CurrAccount.Balance {
-		return "Not enough coins to make a payment operation"
-	}
-	if sum < 0 {
-		return "Incorrect value of sum of the operation"
-	}
-
-	accUtxo := account.GetAccUtxo()
-	transInputs, accUtxo, inpSum := GetTransInputs(sum, accUtxo)
-	if transInputs != nil {
-		utxo.UtxoList = append(utxo.UtxoList, utxo.UTXO{PubKey: recieverAdr, Sum: sum}) // Send coins
-
-		if inpSum-sum != 0 { // generating change
-			accKeys := account.CurrAccount.KeyPairList
-			account.AddKeyPairToAccount(pass) // generate new keypair for the change
-			utxo.UtxoList = append(utxo.UtxoList,
-				utxo.UTXO{Id: utxo.UtxoList[len(utxo.UtxoList)-1].Id + 1,
-					PubKey: account.CurrAccount.KeyPairList[len(accKeys)].PublKey, Sum: inpSum - sum})
-		}
-	} else {
-		return "Not enough coins for sending."
-	}
-
-	return ""
 }

@@ -56,7 +56,7 @@ func GetAccUtxo() []utxo.UTXO {
 	var accUtxo []utxo.UTXO
 	for i := 0; i < len(CurrAccount.KeyPairList); i++ {
 		for j := 0; j < len(utxo.UtxoList); j++ {
-			if utxo.UtxoList[j].PubKey == CurrAccount.KeyPairList[i].PublKey {
+			if utxo.UtxoList[j].Address == hashing.SHA1(CurrAccount.KeyPairList[i].PublKey) {
 				accUtxo = append(accUtxo, utxo.UtxoList[j])
 			}
 		}
@@ -70,7 +70,7 @@ func GetAccUtxo() []utxo.UTXO {
 func GetBalByKeyHash(keyHash string, outInd int) uint64 {
 	ind := -1
 	for j := 0; j < len(utxo.UtxoList); j++ {
-		if keyHash == hashing.SHA1(utxo.UtxoList[j].PubKey) {
+		if keyHash == hashing.SHA1(utxo.UtxoList[j].Address) {
 			ind++
 		}
 		if ind == outInd {
@@ -83,7 +83,7 @@ func GetBalByKeyHash(keyHash string, outInd int) uint64 {
 func getKeyBal(pubKey string) uint64 {
 	bal := uint64(0)
 	for j := 0; j < len(utxo.UtxoList); j++ {
-		if pubKey == utxo.UtxoList[j].PubKey {
+		if hashing.SHA1(pubKey) == utxo.UtxoList[j].Address {
 			bal += utxo.UtxoList[j].Sum
 		}
 	}
