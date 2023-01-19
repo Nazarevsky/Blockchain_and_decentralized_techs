@@ -5,17 +5,20 @@ import (
 	"bavovnacoin/transaction"
 	"bavovnacoin/utxo"
 	"fmt"
+	"math"
 	"time"
 )
 
 var Blockchain []Block
 
 type Block struct {
-	Id            uint
-	Blocksize     uint
-	Version       uint
-	HashPrevBlock string
-	Time          time.Time
+	Id               uint
+	Blocksize        uint
+	Version          uint
+	HashPrevBlock    string
+	Time             time.Time
+	TransactionCount uint
+	MerkleRoot       string
 	// Bits and Nonce fields - depends on Bavovnacoin concept thw will be choosen further
 	// Bits          uint
 	// Nonce         uint64
@@ -57,6 +60,52 @@ func AddBlockToBlockchain(block Block) bool {
 	return isBlockValid
 }
 
+func GenMerkleRoot(transactions []transaction.Transaction) string {
+	var height float64
+	if len(transactions) == 1 {
+		height = 1
+	} else {
+		height = math.Log2(float64(len(transactions))) + 1
+		if float64(int(height)) != height {
+			height = float64(int(height)) + 1
+		}
+	}
+
+	var currLayer []string
+	if len(transactions) != 0 {
+		for i := 0; i < len(transactions); i++ {
+			currLayer = append(currLayer, hashing.SHA1(transaction.GetCatTxFields(transactions[i])))
+		}
+	} else {
+		currLayer = append(currLayer, hashing.SHA1(""))
+	}
+
+	for i := 0; i < int(height); i++ {
+		var nextLayerLen int
+		var isOddNodesCount bool = false
+		if len(currLayer)%2 == 0 {
+			nextLayerLen = len(currLayer) / 2
+		} else {
+			nextLayerLen = (len(currLayer) - 1) / 2
+			isOddNodesCount = true
+		}
+
+		nextLayer := make([]string, nextLayerLen)
+
+		currLayerInd := 0
+		for j := 0; j < nextLayerLen; j++ {
+			nextLayer[j] = hashing.SHA1(currLayer[currLayerInd] + currLayer[currLayerInd+1])
+			currLayerInd += 2
+		}
+
+		if isOddNodesCount {
+			nextLayer = append(nextLayer, hashing.SHA1(currLayer[len(currLayer)-1]))
+		}
+		currLayer = nextLayer
+	}
+	return currLayer[0]
+}
+
 func CreateBlock(id uint, txArr []transaction.Transaction, rewardAdr string) Block {
 	var newBlock Block
 	newBlock.Id = id
@@ -75,15 +124,21 @@ func CreateBlock(id uint, txArr []transaction.Transaction, rewardAdr string) Blo
 
 	txArr = append([]transaction.Transaction{coinbaseTx}, txArr...)
 	copy(newBlock.Transactions, txArr)
+
+	newBlock.TransactionCount = uint(len(newBlock.Transactions))
+	newBlock.MerkleRoot = GenMerkleRoot(newBlock.Transactions)
+
 	newBlock.Blocksize = uint(len(BlockToString(newBlock)))
 	return newBlock
 }
 
 func ValidateBlock(block Block) bool {
 	lastBlockHash := hashing.SHA1(BlockToString(Blockchain[len(Blockchain)-1]))
+	merkleRoot := GenMerkleRoot(block.Transactions)
 	// Transaction are verified when added to mempool, no need to double check it
 
-	if block.HashPrevBlock != lastBlockHash {
+	if block.HashPrevBlock != lastBlockHash ||
+		block.MerkleRoot != merkleRoot {
 		return false
 	}
 
